@@ -22,6 +22,15 @@ class Company extends Model
         'supervisor_name',
         'partnership_status',
         'student_quota',
+        'latitude',
+        'longitude',
+        'allowed_radius',
+    ];
+
+    protected $casts = [
+        'latitude' => 'float',
+        'longitude' => 'float',
+        'allowed_radius' => 'integer',
     ];
 
     public function placements()

@@ -101,4 +101,26 @@ class JournalController extends Controller
 
         return back()->with('success', 'Permintaan revisi jurnal telah dikirimkan ke siswa.');
     }
+
+    public function update(Request $request, $id)
+    {
+        $user = $request->user();
+        $student = Student::where('user_id', $user->id)->firstOrFail();
+        $journal = Journal::where('student_id', $student->id)->findOrFail($id);
+
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'activity' => 'required|string|max:255',
+            'description' => 'required|string',
+            'skill' => 'required|string',
+            'obstacle' => 'nullable|string',
+            'solution' => 'nullable|string',
+        ]);
+
+        $journal->update(array_merge($validated, [
+            'status' => 'Menunggu Approval',
+        ]));
+
+        return back()->with('success', 'Perbaikan jurnal berhasil disimpan dan diajukan ulang untuk approval.');
+    }
 }

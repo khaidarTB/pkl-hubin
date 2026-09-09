@@ -22,6 +22,9 @@ export interface Company {
     supervisor_name?: string;
     partnership_status: 'active' | 'inactive' | 'pending';
     student_quota: number;
+    latitude?: number | null;
+    longitude?: number | null;
+    allowed_radius?: number | null;
     placements_count?: number;
 }
 
@@ -114,6 +117,7 @@ export interface Visit {
     teacher?: User;
     student?: Student;
     company?: Company;
+    placement?: Placement;
     report?: VisitReport;
     document?: Document;
 }
@@ -214,8 +218,35 @@ export interface Attendance {
     latitude?: number;
     longitude?: number;
     location_address?: string;
-    status: 'Hadir' | 'Izin' | 'Sakit' | 'Alpa';
+    status: 'Hadir' | 'Terlambat' | 'Izin' | 'Sakit' | 'Alpa';
+    server_timestamp?: string;
+    gps_accuracy?: number | null;
+    company_latitude?: number | null;
+    company_longitude?: number | null;
+    distance_from_company?: number | null;
+    allowed_radius?: number | null;
+    location_status?: 'VERIFIED' | 'REJECTED' | null;
+    time_status?: 'ON_TIME' | 'LATE' | null;
     student?: Student;
+}
+
+export interface AttendanceAttempt {
+    id: number;
+    student_id: number;
+    company_id?: number | null;
+    server_timestamp: string;
+    latitude: number;
+    longitude: number;
+    gps_accuracy?: number | null;
+    company_latitude?: number | null;
+    company_longitude?: number | null;
+    distance_from_company?: number | null;
+    allowed_radius?: number | null;
+    result?: 'HADIR' | 'TERLAMBAT' | 'DITOLAK' | null;
+    failure_reason?: string | null;
+    notes?: string | null;
+    student?: Student;
+    company?: Company;
 }
 
 export interface Journal {
@@ -235,6 +266,25 @@ export interface Journal {
     approver?: User;
 }
 
+export interface AssessmentAspect {
+    id: number;
+    name: string;
+    description?: string | null;
+    max_score: number;
+    min_score: number;
+    sort_order: number;
+    is_active: boolean;
+    scores_count?: number;
+}
+
+export interface AssessmentAspectScore {
+    id: number;
+    assessment_id: number;
+    assessment_aspect_id: number;
+    score: number;
+    aspect?: AssessmentAspect;
+}
+
 export interface Assessment {
     id: number;
     student_id: number;
@@ -247,7 +297,9 @@ export interface Assessment {
     creativity: number;
     problem_solving: number;
     total_score: number;
+    status?: 'LULUS' | 'BELUM';
     notes?: string;
+    aspect_scores?: AssessmentAspectScore[];
     student?: Student;
     supervisor?: User;
 }

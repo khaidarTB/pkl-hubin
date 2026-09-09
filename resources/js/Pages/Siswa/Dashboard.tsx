@@ -1,5 +1,5 @@
 import React from 'react';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { StatCard } from '@/Components/StatCard';
 import { StatusBadge } from '@/Components/StatusBadge';
@@ -14,7 +14,6 @@ interface Props {
 }
 
 export default function SiswaDashboard({ studentName, student, todayAttendance, stats }: Props) {
-    const handleQuickCheckin = () => { router.post('/absensi/checkin', { latitude: -6.2088, longitude: 106.8456 }); };
 
     return (
         <DashboardLayout>
@@ -33,10 +32,10 @@ export default function SiswaDashboard({ studentName, student, todayAttendance, 
                     </div>
                     <div className="flex items-center gap-2">
                         {!todayAttendance?.check_in ? (
-                            <button onClick={handleQuickCheckin}
+                            <Link href="/absensi"
                                 className="px-4 py-2.5 rounded-xl bg-white text-emerald-700 font-bold text-[12px] hover:bg-emerald-50 transition-colors flex items-center gap-1.5">
                                 <CalendarCheck className="w-4 h-4" /> Absen Masuk
-                            </button>
+                            </Link>
                         ) : (
                             <div className="px-4 py-2 rounded-xl bg-white/20 text-white text-[12px] font-semibold flex items-center gap-1.5">
                                 <CheckCircle2 className="w-4 h-4" /> Sudah Absen ({todayAttendance.check_in})

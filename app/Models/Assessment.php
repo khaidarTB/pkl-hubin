@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Assessment extends Model
 {
@@ -20,7 +21,12 @@ class Assessment extends Model
         'creativity',
         'problem_solving',
         'total_score',
+        'status',
         'notes',
+    ];
+
+    protected $casts = [
+        'total_score' => 'float',
     ];
 
     public function student()
@@ -31,5 +37,10 @@ class Assessment extends Model
     public function supervisor()
     {
         return $this->belongsTo(User::class, 'industry_supervisor_id');
+    }
+
+    public function aspectScores(): HasMany
+    {
+        return $this->hasMany(AssessmentAspectScore::class);
     }
 }

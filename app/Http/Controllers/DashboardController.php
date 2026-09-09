@@ -13,6 +13,7 @@ use App\Models\Journal;
 use App\Models\Assessment;
 use App\Models\PklApplication;
 use App\Models\Visit;
+use App\Models\User;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -73,7 +74,7 @@ class DashboardController extends Controller
         });
 
         // Monitoring Student Table
-        $placements = Placement::with(['student.user', 'company', 'industry'])->get()->map(function ($p) {
+        $placements = Placement::with(['student.user', 'company', 'industry', 'schoolSupervisor'])->get()->map(function ($p) {
             $attCount = Attendance::where('student_id', $p->student_id)->where('status', 'Hadir')->count();
             $totalDays = max(1, Attendance::where('student_id', $p->student_id)->count());
             $attendancePercent = round(($attCount / $totalDays) * 100);
@@ -89,14 +90,22 @@ class DashboardController extends Controller
 
             return [
                 'id' => $p->student->id,
-                'name' => $p->student->user->name,
-                'class' => $p->student->class,
-                'major' => $p->student->major,
+                'placement_id' => $p->id,
+                'name' => $p->student->user->name ?? 'Siswa',
+                'email' => $p->student->user->email ?? '-',
+                'nis' => $p->student->nis ?? '-',
+                'class' => $p->student->class ?? '-',
+                'major' => $p->student->major ?? '-',
+                'phone' => $p->student->phone ?? '-',
                 'industry' => $p->company->name ?? ($p->industry->name ?? 'Perusahaan Mitra'),
                 'attendance_percent' => $attendancePercent,
                 'journal_count' => "{$journalCount} / 25",
                 'status' => $statusBadge,
                 'placement_status' => $p->status,
+                'school_supervisor_id' => $p->school_supervisor_id,
+                'school_supervisor' => $p->schoolSupervisor->name ?? 'Belum Ditugaskan',
+                'start_date' => $p->start_date ? Carbon::parse($p->start_date)->format('Y-m-d') : '-',
+                'end_date' => $p->end_date ? Carbon::parse($p->end_date)->format('Y-m-d') : '-',
             ];
         });
 
@@ -108,6 +117,8 @@ class DashboardController extends Controller
             'low_attendance_count' => 3,
             'incomplete_journal_count' => 5,
         ];
+
+        $teachers = User::where('role', 'guru')->get(['id', 'name']);
 
         return Inertia::render('Admin/Dashboard', [
             'stats' => [
@@ -126,6 +137,7 @@ class DashboardController extends Controller
             ],
             'studentsMonitoring' => $placements,
             'earlyWarning' => $earlyWarning,
+            'teachers' => $teachers,
         ]);
     }
 
@@ -143,14 +155,20 @@ class DashboardController extends Controller
 
             return [
                 'id' => $p->student->id,
+                'placement_id' => $p->id,
                 'name' => $p->student->user->name,
-                'nis' => $p->student->nis,
+                'email' => $p->student->user->email ?? '-',
+                'nis' => $p->student->nis ?? '-',
+                'phone' => $p->student->phone ?? '-',
                 'class' => $p->student->class,
                 'major' => $p->student->major,
                 'industry' => $p->company->name ?? ($p->industry->name ?? 'Perusahaan Mitra'),
                 'attendance_percent' => $attendancePercent,
                 'journal_filled' => $journalCount,
                 'status' => ($attendancePercent < 80) ? 'Perlu Perhatian' : 'Aman',
+                'placement_status' => $p->status,
+                'start_date' => $p->start_date ? Carbon::parse($p->start_date)->format('Y-m-d') : '-',
+                'end_date' => $p->end_date ? Carbon::parse($p->end_date)->format('Y-m-d') : '-',
             ];
         });
 
@@ -181,12 +199,19 @@ class DashboardController extends Controller
             $jPending = Journal::where('student_id', $p->student_id)->where('status', 'Menunggu Approval')->count();
             return [
                 'id' => $p->student->id,
+                'placement_id' => $p->id,
                 'name' => $p->student->user->name,
+                'nis' => $p->student->nis ?? '-',
+                'email' => $p->student->user->email ?? '-',
+                'phone' => $p->student->phone ?? '-',
                 'class' => $p->student->class,
                 'major' => $p->student->major,
+                'status' => $p->status,
                 'pending_journals' => $jPending,
                 'has_assessment' => $p->student->assessment !== null,
                 'score' => $p->student->assessment ? $p->student->assessment->total_score : null,
+                'start_date' => $p->start_date ? Carbon::parse($p->start_date)->format('Y-m-d') : '-',
+                'end_date' => $p->end_date ? Carbon::parse($p->end_date)->format('Y-m-d') : '-',
             ];
         });
 

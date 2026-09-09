@@ -99,4 +99,45 @@ class PlacementController extends Controller
 
         return back()->with('success', "Penempatan PKL untuk {$student->user->name} di {$company->name} berhasil disimpan.");
     }
+
+    public function update(Request $request, $id)
+    {
+        $placement = Placement::with('student.user')->findOrFail($id);
+
+        $validated = $request->validate([
+            'company_id' => 'required|exists:companies,id',
+            'school_supervisor_id' => 'required|exists:users,id',
+            'industry_supervisor_id' => 'nullable|exists:users,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'status' => 'required|in:Aktif,Bermasalah,Selesai,Dibatalkan',
+        ]);
+
+        $placement->update($validated);
+
+        return back()->with('success', "Data penempatan {$placement->student->user->name} berhasil diperbarui.");
+    }
+
+    public function quickStatus(Request $request, $id)
+    {
+        $placement = Placement::with('student.user')->findOrFail($id);
+
+        $validated = $request->validate([
+            'status' => 'required|in:Aktif,Bermasalah,Selesai,Dibatalkan',
+            'school_supervisor_id' => 'nullable|exists:users,id',
+        ]);
+
+        $placement->update(array_filter($validated));
+
+        return back()->with('success', "Status penempatan {$placement->student->user->name} diubah menjadi \"{$validated['status']}\".");
+    }
+
+    public function destroy($id)
+    {
+        $placement = Placement::with('student.user')->findOrFail($id);
+        $studentName = $placement->student->user->name ?? 'Siswa';
+        $placement->delete();
+
+        return back()->with('success', "Penempatan PKL untuk {$studentName} berhasil dibatalkan/dihapus.");
+    }
 }

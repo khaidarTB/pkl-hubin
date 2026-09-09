@@ -5,27 +5,24 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Attendance extends Model
+class AttendanceAttempt extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'student_id',
-        'date',
-        'check_in',
-        'check_out',
+        'company_id',
+        'server_timestamp',
         'latitude',
         'longitude',
-        'location_address',
-        'status',
-        'server_timestamp',
         'gps_accuracy',
         'company_latitude',
         'company_longitude',
         'distance_from_company',
         'allowed_radius',
-        'location_status',
-        'time_status',
+        'result',
+        'failure_reason',
+        'notes',
     ];
 
     protected function casts(): array
@@ -45,5 +42,10 @@ class Attendance extends Model
     public function student()
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
     }
 }
