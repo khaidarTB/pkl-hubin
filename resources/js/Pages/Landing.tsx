@@ -42,7 +42,7 @@ interface Props {
 }
 
 export default function Landing({ stats, partnerships = [], documentations = [] }: Props) {
-    // 1. Photo Gallery Carousel State
+
     const gallerySlides = [
         {
             id: 1,
@@ -92,14 +92,13 @@ export default function Landing({ stats, partnerships = [], documentations = [] 
 
     // 2. Partner Logos (SMK Taruna Bangsa Industry Partners)
     const partnerLogos = [
-        { name: 'PT Astra International Tbk', category: 'Otomotif & Manufaktur', logo: 'ASTRA' },
-        { name: 'PT Telkom Indonesia Tbk', category: 'Telekomunikasi & Cloud', logo: 'TELKOM' },
-        { name: 'PT Indosat Ooredoo Hutchison', category: 'Jaringan & Digital', logo: 'INDOSAT' },
-        { name: 'PT Toyota-Astra Motor', category: 'Manufaktur Presisi', logo: 'TOYOTA' },
-        { name: 'PT Bank Mandiri (Persero) Tbk', category: 'IT & Financial Technology', logo: 'MANDIRI' },
-        { name: 'PT Digital Nusantara Solusindo', category: 'Software House & AI Lab', logo: 'DIGITAL NUSANTARA' },
-        { name: 'PT Paragon Tech & Innovation', category: 'R&D & Supply Chain', logo: 'PARAGON' },
-        { name: 'PT Netzme Kreasi Indonesia', category: 'Fintech & QRIS Infrastructure', logo: 'NETZME' },
+        { name: 'PT Astra International Tbk', category: 'Otomotif & Manufaktur', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_of_PT_Astra_International_Tbk_terbaru_2025.png?utm_source=id.wikipedia.org&utm_campaign=index&utm_content=original' },
+        { name: 'PT Toyota-Astra Motor', category: 'Manufaktur Presisi', logo: 'https://recruitment.toyota.astra.co.id/img/tam-logo.png' },
+        { name: 'Bank Indonesia', category: 'IT & Financial Technology', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/BI_Logo_%28cropped%29.png/250px-BI_Logo_%28cropped%29.png?utm_source=commons.wikimedia.org&utm_campaign=parser&utm_content=thumbnail' },
+        { name: 'PT Digital Nusantara Solusindo', category: 'Data Center', logo: 'https://dci-indonesia.com/images/logo/logo-white.svg' },
+        { name: 'PT Teradata Indonusa, Tbk.', category: 'Hardware & Tech Manufracture', logo: 'https://e-ipo.co.id/en/pipeline/get-logo?id=97'},
+        { name: 'Badan Pusat Statistik', category: 'Population Registration', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original'},
+        { name: 'Axioo Class Program', category: 'Class Program', logo: 'https://smkn1geger.sch.id/wp-content/uploads/2017/09/kelas-industri-axioo.png'},
     ];
 
     // 3. Lifecycle Steps
@@ -242,7 +241,7 @@ export default function Landing({ stats, partnerships = [], documentations = [] 
                                 className="w-64 shrink-0 bg-slate-950 border border-slate-800 rounded-2xl p-4 flex items-center gap-3 hover:border-slate-700 transition-colors"
                             >
                                 <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-emerald-400 font-black text-[10px] shrink-0">
-                                    {partner.logo.substring(0, 3)}
+                                    <img src={partner.logo} alt="partners logo" />
                                 </div>
                                 <div className="text-left overflow-hidden">
                                     <h4 className="font-bold text-white text-[11px] truncate">{partner.name}</h4>
