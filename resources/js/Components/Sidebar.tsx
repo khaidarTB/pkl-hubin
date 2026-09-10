@@ -83,7 +83,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     {
                         title: 'UTAMA',
                         items: [
-                            { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+                            { label: 'Dashboard', href: '/dashboard', icon: Proportions },
                         ],
                     },
                     {
@@ -109,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     {
                         title: 'UTAMA',
                         items: [
-                            { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+                            { label: 'Dashboard', href: '/dashboard', icon: Proportions },
                         ],
                     },
                     {
@@ -129,7 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     {
                         title: 'UTAMA',
                         items: [
-                            { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+                            { label: 'Dashboard', href: '/dashboard', icon: Proportions },
                         ],
                     },
                     {
