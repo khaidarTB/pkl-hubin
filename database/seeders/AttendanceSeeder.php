@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\Attendance;
 use App\Models\Placement;
-use App\Models\Student;
 use Illuminate\Database\Seeder;
 
 class AttendanceSeeder extends Seeder
@@ -18,11 +17,11 @@ class AttendanceSeeder extends Seeder
 
         // Koordinat perusahaan aktif (untuk GPS check-in)
         $companyLocations = [
-            -6.208763, 106.845599, // Jakarta
-            -6.917464, 107.619122, // Bandung
-            -7.250445, 112.768845, // Surabaya
-            -7.795580, 110.369490, // Yogyakarta
-            -6.200000, 106.816666, // Jakarta
+            [-6.208763, 106.845599], // Jakarta
+            [-6.917464, 107.619122], // Bandung
+            [-7.250445, 112.768845], // Surabaya
+            [-7.795580, 110.369490], // Yogyakarta
+            [-6.200000, 106.816666], // Jakarta
         ];
 
         $statusDistributions = [
@@ -38,7 +37,7 @@ class AttendanceSeeder extends Seeder
 
         foreach ($activePlacements as $placement) {
             $studentId = $placement->student_id;
-            $loc = $companyLocations[$placement->id % count($companyLocations)];
+            [$companyLatitude, $companyLongitude] = $companyLocations[$placement->id % count($companyLocations)];
 
             $date = clone $startDate;
             while ($date->lte($endDate)) {
@@ -83,8 +82,8 @@ class AttendanceSeeder extends Seeder
                     'date' => $date->toDateString(),
                     'check_in' => $checkIn,
                     'check_out' => $checkOut,
-                    'latitude' => $loc + (mt_rand(-10, 10) / 100000),
-                    'longitude' => $loc + 0.008 + (mt_rand(-10, 10) / 100000),
+                    'latitude' => $companyLatitude + (mt_rand(-10, 10) / 100000),
+                    'longitude' => $companyLongitude + (mt_rand(-10, 10) / 100000),
                     'location_address' => 'Area Perusahaan Mitra PKL',
                     'status' => $status,
                 ]);

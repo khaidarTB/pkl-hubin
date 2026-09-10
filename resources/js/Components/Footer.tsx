@@ -9,8 +9,8 @@ export const Footer: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
                     <div className="md:col-span-2">
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-teal-600 flex items-center justify-center font-black text-white text-xl">
-                                TB
+                            <div className="w-10 h-10 rounded-2xl flex items-center justify-center font-black text-white text-xl">
+                                <img src="/img/pklconnect_logo.png" alt="pklconnect logo" />
                             </div>
                             <div>
                                 <span className="font-extrabold text-xl tracking-tight block">Hubin SMK Taruna Bangsa</span>

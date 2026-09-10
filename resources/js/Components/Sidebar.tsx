@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { 
-    LayoutDashboard, Users, Building2, CalendarCheck, BookOpen, 
+    Proportions, Users, Building2, CalendarCheck, BookOpen, 
     GraduationCap, LineChart, FileSpreadsheet, Sparkles, 
     CheckSquare, LogOut, FileText, MapPin, Calendar, QrCode,
     Award, ListChecks
@@ -37,7 +37,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     {
                         title: 'UTAMA',
                         items: [
-                            { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+                            { label: 'Dashboard', href: '/dashboard', icon: Proportions },
                         ],
                     },
                     {
@@ -178,8 +178,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <div className="flex-1 flex flex-col min-h-0">
                     <div className="h-16 flex items-center px-5 border-b border-white/5 shrink-0">
                         <Link href="/dashboard" className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center font-bold text-white text-sm shadow-lg shadow-emerald-500/20">
-                                P
+                            <div className="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white text-sm">
+                                <img src="/img/pklconnect_logo.png" alt="pklconnect logo" />
                             </div>
                             <div>
                                 <h1 className="font-bold text-[15px] text-white tracking-tight leading-none">PKLConnect</h1>

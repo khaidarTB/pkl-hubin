@@ -12,8 +12,8 @@ export const Navbar: React.FC = () => {
             <div className="w-full px-4 sm:px-8 lg:px-12 h-20 flex items-center justify-between">
                 {/* Brand Logo SMK Taruna Bangsa */}
                 <Link href="/" className="flex items-center gap-3 group">
-                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-green-700 flex items-center justify-center font-black text-white text-xl shadow-lg shadow-emerald-500/30 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                        TB
+                    <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr flex items-center justify-center font-black text-white text-xl group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                        <img src="/img/pklconnect_logo.png" alt="pklconnect logo" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
