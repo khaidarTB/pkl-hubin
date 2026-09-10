@@ -26,7 +26,7 @@ class NotificationSeeder extends Seeder
                     'message' => "Terdapat {$siswas->count()} siswa yang mengajukan aplikasi PKL dan menunggu verifikasi.",
                     'type' => 'info',
                     'icon' => 'FileText',
-                    'link' => '/admin/applications',
+                    'link' => '/admin/Applications',
                     'is_read' => $i === 0,
                     'data' => ['count' => $siswas->count()],
                 ]);
