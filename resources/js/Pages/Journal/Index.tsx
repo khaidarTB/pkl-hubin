@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { StatusBadge } from '@/Components/StatusBadge';
-import { BookOpen, Plus, Send, CheckCircle2, Clock, AlertCircle, Edit3, Eye, X, Search, Calendar, Sparkles } from 'lucide-react';
+import { BookOpen, Plus, Send, CheckCircle2, Clock, AlertCircle, Edit3, Eye, X, Search, Calendar, Sparkles, FileDown } from 'lucide-react';
 import { Journal } from '@/Types';
 
 interface Props {
@@ -87,7 +87,7 @@ export default function JournalIndex({ journals }: Props) {
                     className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/20 hover:scale-105 transition-transform"
                 >
                     <Plus className="w-4 h-4" />
-                    <span>Tambah Jurnal Hari Ini</span>
+                    <span>+ Tambah Jurnal Hari Ini</span>
                 </button>
             </div>
 
@@ -189,7 +189,7 @@ export default function JournalIndex({ journals }: Props) {
                                 <div className="mt-4 p-4 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800">
                                     <div className="flex items-center gap-1.5 font-bold mb-1 text-rose-900">
                                         <AlertCircle className="w-4 h-4 text-rose-600" />
-                                        <span>Catatan Revisi dari Pembimbing Industri:</span>
+                                        <span>Catatan Revisi dari Pembimbing:</span>
                                     </div>
                                     <p className="leading-relaxed pl-5">{j.revision_note}</p>
                                     <div className="mt-3 pl-5">
@@ -201,6 +201,30 @@ export default function JournalIndex({ journals }: Props) {
                                             <span>Buka Form Perbaikan</span>
                                         </button>
                                     </div>
+                                </div>
+                            )}
+
+                            {j.status === 'Approved' && j.approver && (
+                                <div className="mt-4 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-wrap items-center justify-between gap-3">
+                                    <div className="text-xs text-emerald-900">
+                                        <strong>Disetujui oleh:</strong> {j.approver.name}
+                                        <span className="text-emerald-700 ml-2 font-medium">({j.approver.role === 'guru' ? 'Pembimbing Sekolah / Walikelas' : j.approver.role === 'industri' ? 'Pembimbing Industri' : j.approver.role})</span>
+                                        {j.approved_at && (
+                                            <span className="text-emerald-600 block mt-0.5">
+                                                {new Date(j.approved_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {j.approved_signature_url && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-bold uppercase text-emerald-700">Tanda Tangan</span>
+                                            <img
+                                                src={j.approved_signature_url}
+                                                alt="Tanda tangan approver"
+                                                className="h-12 w-auto bg-white rounded-lg border border-emerald-200 p-1 object-contain"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -255,6 +279,33 @@ export default function JournalIndex({ journals }: Props) {
                                 <div className="p-3 bg-rose-50 rounded-xl border border-rose-200">
                                     <span className="font-bold text-rose-800 text-[11px]">Catatan Revisi:</span>
                                     <p className="text-rose-900 mt-0.5">{selectedJournal.revision_note}</p>
+                                </div>
+                            )}
+
+                            {selectedJournal.status === 'Approved' && selectedJournal.approver && (
+                                <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+                                    <span className="font-bold text-emerald-800 text-[11px]">Disetujui oleh:</span>
+                                    <p className="text-emerald-900 mt-0.5 font-semibold">
+                                        {selectedJournal.approver.name}
+                                        <span className="text-emerald-700 font-medium ml-1.5">
+                                            ({selectedJournal.approver.role === 'guru' ? 'Pembimbing Sekolah / Walikelas' : selectedJournal.approver.role === 'industri' ? 'Pembimbing Industri' : selectedJournal.approver.role})
+                                        </span>
+                                    </p>
+                                    {selectedJournal.approved_at && (
+                                        <p className="text-emerald-700 text-[11px] mt-0.5">
+                                            {new Date(selectedJournal.approved_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                                        </p>
+                                    )}
+                                    {selectedJournal.approved_signature_url && (
+                                        <div className="mt-2 flex items-center gap-2">
+                                            <span className="text-[10px] font-bold uppercase text-emerald-700">Tanda Tangan</span>
+                                            <img
+                                                src={selectedJournal.approved_signature_url}
+                                                alt="Tanda tangan approver"
+                                                className="h-14 w-auto bg-white rounded-lg border border-emerald-200 p-1 object-contain"
+                                            />
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

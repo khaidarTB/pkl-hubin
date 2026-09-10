@@ -261,6 +261,9 @@ export interface Journal {
     status: 'Menunggu Approval' | 'Approved' | 'Revision';
     approved_by?: number;
     approved_at?: string;
+    approved_signature?: string;
+    approved_signature_url?: string | null;
+    signature_ready?: boolean;
     revision_note?: string;
     student?: Student;
     approver?: User;

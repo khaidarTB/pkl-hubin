@@ -114,6 +114,7 @@ Route::middleware(['auth'])->group(function () {
 
     // E-Journal
     Route::get('/jurnal', [JournalController::class, 'index'])->name('journals.index');
+    Route::get('/jurnal/download', [JournalController::class, 'download'])->name('journals.download');
     Route::post('/jurnal', [JournalController::class, 'store'])->name('journals.store');
     Route::put('/jurnal/{id}', [JournalController::class, 'update'])->name('journals.update');
     Route::put('/jurnal/{id}/approve', [JournalController::class, 'approve'])->name('journals.approve');

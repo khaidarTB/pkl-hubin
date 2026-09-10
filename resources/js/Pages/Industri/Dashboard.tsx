@@ -58,15 +58,6 @@ export default function IndustriDashboard({ supervisor, students, pendingApprova
         s.class.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleApprove = (id: number) => {
-        router.put(`/jurnal/${id}/approve`, {}, {
-            preserveScroll: true,
-            onSuccess: () => {
-                if (selectedJournal?.id === id) setSelectedJournal(null);
-            }
-        });
-    };
-
     const handleRevisionSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!revisionModalJournal || !revisionNote.trim()) return;
@@ -165,13 +156,14 @@ export default function IndustriDashboard({ supervisor, students, pendingApprova
                                         <Eye className="w-3.5 h-3.5" />
                                         <span>Detail</span>
                                     </button>
-                                    <button
-                                        onClick={() => handleApprove(j.id)}
+                                    <Link
+                                        href="/jurnal"
                                         className="flex items-center gap-1 px-3.5 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-colors"
+                                        title="Setujui jurnal dengan upload tanda tangan"
                                     >
                                         <Check className="w-3.5 h-3.5" />
                                         <span>Setujui</span>
-                                    </button>
+                                    </Link>
                                     <button
                                         onClick={() => {
                                             setRevisionModalJournal(j);
@@ -344,13 +336,13 @@ export default function IndustriDashboard({ supervisor, students, pendingApprova
                                 <X className="w-3.5 h-3.5" />
                                 <span>Minta Revisi</span>
                             </button>
-                            <button
-                                onClick={() => handleApprove(selectedJournal.id)}
+                            <Link
+                                href="/jurnal"
                                 className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 flex items-center gap-1 shadow-md shadow-emerald-600/20"
                             >
                                 <Check className="w-3.5 h-3.5" />
                                 <span>Setujui Jurnal</span>
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </div>

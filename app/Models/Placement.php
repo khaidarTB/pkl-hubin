@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Placement extends Model
 {
@@ -17,6 +18,8 @@ class Placement extends Model
         'pkl_period_id',
         'school_supervisor_id',
         'industry_supervisor_id',
+        'industry_signature',
+        'school_signature',
         'placed_by',
         'placed_at',
         'start_date',
@@ -24,11 +27,27 @@ class Placement extends Model
         'status',
     ];
 
+    protected $appends = ['industry_signature_url', 'school_signature_url'];
+
     protected function casts(): array
     {
         return [
             'placed_at' => 'datetime',
         ];
+    }
+
+    public function getIndustrySignatureUrlAttribute()
+    {
+        return $this->industry_signature
+            ? Storage::disk('public')->url($this->industry_signature)
+            : null;
+    }
+
+    public function getSchoolSignatureUrlAttribute()
+    {
+        return $this->school_signature
+            ? Storage::disk('public')->url($this->school_signature)
+            : null;
     }
 
     public function student()

@@ -80,6 +80,36 @@ export default function JournalAdminIndex({ journals }: Props) {
                                     </span>
                                 )}
                             </div>
+
+                            {j.revision_note && (
+                                <div className="mt-4 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-xs text-amber-900 font-medium">
+                                    <strong>Catatan Revisi Ditulis:</strong> {j.revision_note}
+                                </div>
+                            )}
+
+                            {j.status === 'Approved' && j.approver && (
+                                <div className="mt-4 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 flex flex-wrap items-center justify-between gap-3">
+                                    <div className="text-xs text-emerald-900">
+                                        <strong>Disetujui oleh:</strong> {j.approver.name}
+                                        <span className="text-emerald-700 ml-2 font-medium">({j.approver.role === 'guru' ? 'Pembimbing Sekolah / Walikelas' : j.approver.role === 'industri' ? 'Pembimbing Industri' : j.approver.role})</span>
+                                        {j.approved_at && (
+                                            <span className="text-emerald-600 block mt-0.5">
+                                                {new Date(j.approved_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {j.approved_signature_url && (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-bold uppercase text-emerald-700">Tanda Tangan</span>
+                                            <img
+                                                src={j.approved_signature_url}
+                                                alt="Tanda tangan approver"
+                                                className="h-12 w-auto bg-white rounded-lg border border-emerald-200 p-1 object-contain"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     ))
                 )}

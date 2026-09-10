@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Journal;
+use App\Models\Student;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Models\Journal;
-use App\Models\Student;
-use Carbon\Carbon;
 
 class JournalController extends Controller
 {
@@ -26,18 +27,34 @@ class JournalController extends Controller
             ]);
         }
 
-        if ($user->isIndustri()) {
-            // Pending approval list
-            $journals = Journal::with(['student.user', 'student.placement.industry'])
+        // Industri (pembimbing DUDI) & Guru/walikelas (pembimbing sekolah)
+        // keduanya berhak approve jurnal, masing-masing untuk siswa bimbingannya.
+        if ($user->isIndustri() || $user->isGuru()) {
+            $supervisorColumn = $user->isIndustri()
+                ? 'industry_supervisor_id'
+                : 'school_supervisor_id';
+
+            $signatureColumn = $user->isIndustri()
+                ? 'industry_signature'
+                : 'school_signature';
+
+            $journals = Journal::with(['student.user', 'student.placement.industry', 'approver'])
+                ->whereHas('student.placement', fn ($q) => $q->where($supervisorColumn, $user->id))
                 ->orderBy('date', 'desc')
                 ->get();
+
+            // Tandai apakah tanda tangan approver sudah tersimpan di penempatan,
+            // sehingga approval berikutnya tidak perlu upload ulang (TTD sekali saja).
+            $journals->each(function ($journal) use ($signatureColumn) {
+                $journal->signature_ready = ! empty($journal->student?->placement?->{$signatureColumn});
+            });
 
             return Inertia::render('Journal/Approval', [
                 'journals' => $journals,
             ]);
         }
 
-        // Admin / Guru
+        // Admin
         $journals = Journal::with(['student.user', 'student.placement.industry', 'approver'])
             ->orderBy('date', 'desc')
             ->get();
@@ -77,14 +94,42 @@ class JournalController extends Controller
 
     public function approve(Request $request, $id)
     {
-        $journal = Journal::findOrFail($id);
+        $journal = Journal::with('student.placement')->findOrFail($id);
+        $user = $request->user();
+
+        $isIndustri = $user->isIndustri();
+        $signatureColumn = $isIndustri ? 'industry_signature' : 'school_signature';
+        $placement = $journal->student?->placement;
+
+        // Tanda tangan cukup diunggah sekali (tersimpan di placement).
+        // Approval berikutnya otomatis memakai tanda tangan yang sama.
+        $existingSignature = $placement?->{$signatureColumn} ?? null;
+
+        if (! $existingSignature) {
+            $request->validate([
+                'signature' => 'required|image|mimes:png,jpg,jpeg|max:3072',
+            ]);
+        }
+
+        $signaturePath = $existingSignature;
+        if (! $signaturePath && $request->hasFile('signature')) {
+            $signaturePath = $request->file('signature')->store('signatures', 'public');
+        }
+
+        if ($placement && $signaturePath && ! $existingSignature) {
+            $placement->update([$signatureColumn => $signaturePath]);
+        }
+
         $journal->update([
             'status' => 'Approved',
-            'approved_by' => $request->user()->id,
+            'approved_by' => $user->id,
             'approved_at' => Carbon::now(),
+            'approved_signature' => $signaturePath,
         ]);
 
-        return back()->with('success', 'Jurnal berhasil di-approve.');
+        return back()->with('success', $existingSignature
+            ? 'Jurnal berhasil di-approve (tanda tangan otomatis dipakai).'
+            : 'Jurnal berhasil di-approve dengan tanda tangan.');
     }
 
     public function revision(Request $request, $id)
@@ -122,5 +167,86 @@ class JournalController extends Controller
         ]));
 
         return back()->with('success', 'Perbaikan jurnal berhasil disimpan dan diajukan ulang untuk approval.');
+    }
+
+    public function download(Request $request)
+    {
+        $user = $request->user();
+
+        $studentBase = Student::with([
+            'user',
+            'placement.company',
+            'placement.industry',
+            'placement.industrySupervisor',
+            'placement.schoolSupervisor',
+        ])->whereNotNull('id');
+
+        if ($user->isSiswa()) {
+            $student = $studentBase->where('user_id', $user->id)->firstOrFail();
+        } else {
+            $request->validate(['student_id' => 'required|exists:students,id']);
+
+            $studentBase->where('id', $request->integer('student_id'));
+
+            if ($user->isGuru()) {
+                $studentBase->whereHas('placement', fn ($q) => $q->where('school_supervisor_id', $user->id));
+            } elseif ($user->isIndustri()) {
+                $studentBase->whereHas('placement', fn ($q) => $q->where('industry_supervisor_id', $user->id));
+            }
+
+            $student = $studentBase->firstOrFail();
+        }
+
+        $journals = $student->journals()->orderBy('date')->get();
+
+        $placement = $student->placement;
+        $companyName = $placement?->company?->name ?? $placement?->industry?->name ?? '-';
+
+        // Tentukan tanda tangan & nama pembimbing berdasarkan siapa yang download.
+        // Prioritas: tanda tangan yang tersimpan di placement dipakai otomatis.
+        $industrySigPath = $placement?->industry_signature
+            ? storage_path('app/public/'.$placement->industry_signature)
+            : null;
+        $schoolSigPath = $placement?->school_signature
+            ? storage_path('app/public/'.$placement->school_signature)
+            : null;
+
+        if ($user->isGuru() && $schoolSigPath && file_exists($schoolSigPath)) {
+            $signaturePath = $schoolSigPath;
+            $supervisorName = $placement?->schoolSupervisor?->name ?? '-';
+            $approverLabel = 'Pembimbing Sekolah / Walikelas';
+        } elseif ($user->isIndustri() && $industrySigPath && file_exists($industrySigPath)) {
+            $signaturePath = $industrySigPath;
+            $supervisorName = $placement?->industrySupervisor?->name ?? '-';
+            $approverLabel = 'Pembimbing Industri';
+        } else {
+            // Fallback: pakai industri jika ada, lalu sekolah
+            $signaturePath = ($industrySigPath && file_exists($industrySigPath))
+                ? $industrySigPath
+                : (($schoolSigPath && file_exists($schoolSigPath)) ? $schoolSigPath : null);
+            $supervisorName = $placement?->industrySupervisor?->name
+                ?? $placement?->schoolSupervisor?->name
+                ?? '-';
+            $approverLabel = $placement?->industrySupervisor
+                ? 'Pembimbing Industri'
+                : 'Pembimbing Sekolah / Walikelas';
+        }
+
+        $signatureDataUri = null;
+        if ($signaturePath) {
+            $mime = mime_content_type($signaturePath) ?: 'image/png';
+            $signatureDataUri = 'data:'.$mime.';base64,'.base64_encode(file_get_contents($signaturePath));
+        }
+
+        $pdf = Pdf::loadView('pdf.jurnal', [
+            'student' => $student,
+            'journals' => $journals,
+            'companyName' => $companyName,
+            'supervisorName' => $supervisorName,
+            'approverLabel' => $approverLabel,
+            'signatureDataUri' => $signatureDataUri,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->download('Jurnal_PKL_'.($student->nis ?? $student->id).'.pdf');
     }
 }

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 
 class Journal extends Model
 {
@@ -20,8 +21,11 @@ class Journal extends Model
         'status',
         'approved_by',
         'approved_at',
+        'approved_signature',
         'revision_note',
     ];
+
+    protected $appends = ['approved_signature_url'];
 
     public function student()
     {
@@ -31,5 +35,12 @@ class Journal extends Model
     public function approver()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function getApprovedSignatureUrlAttribute()
+    {
+        return $this->approved_signature
+            ? Storage::disk('public')->url($this->approved_signature)
+            : null;
     }
 }
