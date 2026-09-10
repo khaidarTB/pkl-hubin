@@ -135,9 +135,9 @@ export default function Landing({ stats, partnerships = [], documentations = [] 
                         </div>
 
                         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
-                            Portal Resmi Pengelolaan & Monitoring <br />
+                            Hubungkan Siswa, Sekolah, dan Industri  <br />
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-300">
-                                Praktik Kerja Lapangan (PKL) Siswa
+                                dalam Satu Platform
                             </span>
                         </h1>
 

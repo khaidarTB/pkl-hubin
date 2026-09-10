@@ -241,7 +241,7 @@ class DashboardController extends Controller
 
         $totalAtt = Attendance::where('student_id', $student->id)->count();
         $presentAtt = Attendance::where('student_id', $student->id)->where('status', 'Hadir')->count();
-        $attPercent = $totalAtt > 0 ? round(($presentAtt / $totalAtt) * 100) : 96;
+        $attPercent = $totalAtt > 0 ? round(($presentAtt / $totalAtt) * 100) : null;
 
         $journalCount = Journal::where('student_id', $student->id)->count();
 
@@ -249,16 +249,26 @@ class DashboardController extends Controller
             ->where('date', Carbon::today()->format('Y-m-d'))
             ->first();
 
+        $placement = $student->placement;
+        $daysCount = 0;
+        if ($placement && $placement->status === 'Aktif' && $placement->start_date) {
+            $startDate = Carbon::parse($placement->start_date)->startOfDay();
+            $today = Carbon::today();
+            if ($today->greaterThanOrEqualTo($startDate)) {
+                $daysCount = $startDate->diffInWeekdays($today->addDay());
+            }
+        }
+
         return Inertia::render('Siswa/Dashboard', [
             'studentName' => $user->name,
             'student' => $student,
             'todayAttendance' => $todayAtt,
             'application' => $student->latestApplication,
             'stats' => [
-                'status_pkl' => $student->placement ? $student->placement->status : 'Draft Pendaftaran',
-                'attendance_percent' => $attPercent . '%',
+                'status_pkl' => $placement ? $placement->status : 'Draft Pendaftaran',
+                'attendance_percent' => $attPercent !== null ? $attPercent . '%' : '0%',
                 'journal_filled' => "{$journalCount} / 25",
-                'days_count' => 25,
+                'days_count' => $daysCount,
             ]
         ]);
     }

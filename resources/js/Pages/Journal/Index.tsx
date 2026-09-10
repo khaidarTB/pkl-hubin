@@ -87,7 +87,7 @@ export default function JournalIndex({ journals }: Props) {
                     className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-extrabold text-xs shadow-lg shadow-emerald-600/20 hover:scale-105 transition-transform"
                 >
                     <Plus className="w-4 h-4" />
-                    <span>+ Tambah Jurnal Hari Ini</span>
+                    <span>Tambah Jurnal Hari Ini</span>
                 </button>
             </div>
 

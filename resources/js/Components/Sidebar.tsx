@@ -124,7 +124,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     },
                 ];
             case 'siswa':
-            default:
+            default: {
+                const application = page.props?.auth?.user?.student?.latestApplication;
+                const isPklApproved = application?.status === 'approved';
+
+                const programItems: NavItem[] = [
+                    ...(isPklApproved ? [] : [{ label: 'Daftar PKL', href: '/pkl/pendaftaran', icon: FileText }]),
+                    { label: 'Status Penempatan', href: '/pkl/status', icon: MapPin },
+                    { label: 'Presensi Harian', href: '/absensi', icon: CalendarCheck },
+                    { label: 'E-Jurnal Kegiatan', href: '/jurnal', icon: BookOpen },
+                    { label: 'Nilai & Evaluasi', href: '/penilaian', icon: Award },
+                ];
+
                 return [
                     {
                         title: 'UTAMA',
@@ -134,13 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                     },
                     {
                         title: 'PROGRAM PKL',
-                        items: [
-                            { label: 'Daftar PKL', href: '/pkl/pendaftaran', icon: FileText },
-                            { label: 'Status Penempatan', href: '/pkl/status', icon: MapPin },
-                            { label: 'Presensi Harian', href: '/absensi', icon: CalendarCheck },
-                            { label: 'E-Jurnal Kegiatan', href: '/jurnal', icon: BookOpen },
-                            { label: 'Nilai & Evaluasi', href: '/penilaian', icon: Award },
-                        ],
+                        items: programItems,
                     },
                     {
                         title: 'ASISTEN AI',
@@ -150,6 +155,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                         ],
                     },
                 ];
+            }
         }
     };
 

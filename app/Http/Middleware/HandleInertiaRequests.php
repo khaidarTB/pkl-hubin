@@ -24,7 +24,7 @@ class HandleInertiaRequests extends Middleware
 
         if ($user) {
             if ($user->isSiswa()) {
-                $studentData = Student::with(['placement.industry'])->where('user_id', $user->id)->first();
+                $studentData = Student::with(['placement.industry', 'latestApplication'])->where('user_id', $user->id)->first();
             }
             $userNotifications = \App\Models\Notification::where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')

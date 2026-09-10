@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Head, useForm, Link } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { Company, PklApplication as PklApplicationType, PklPeriod, Student } from '@/Types';
-import { Building2, Upload, FileText, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react';
+import { Building2, Upload, FileText, CheckCircle2, AlertTriangle, ArrowRight, Clock } from 'lucide-react';
 
 interface Props { student: Student | null; companies: Company[]; activePeriod: PklPeriod | null; application: PklApplicationType | null; }
 
@@ -33,6 +33,16 @@ export default function PklApplication({ student, companies, activePeriod, appli
                     </div>
                 </div>
 
+                {!student && (
+                    <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3">
+                        <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5" />
+                        <div>
+                            <h4 className="font-semibold text-rose-800 text-[13px]">Data Profil Belum Lengkap</h4>
+                            <p className="text-[12px] text-rose-700 mt-0.5">Data siswa Anda belum terdaftar di sistem. Silakan hubungi Admin/Hubin untuk melengkapi data sebelum mengajukan PKL.</p>
+                        </div>
+                    </div>
+                )}
+
                 {application?.status === 'revision' && (
                     <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
                         <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
@@ -43,9 +53,66 @@ export default function PklApplication({ student, companies, activePeriod, appli
                     </div>
                 )}
 
+                {application?.status === 'approved' ? (
+                    <div className="bg-white rounded-2xl p-8 sm:p-10 border border-slate-200/80 shadow-sm text-center">
+                        <div className="w-16 h-16 mx-auto rounded-full bg-emerald-50 flex items-center justify-center">
+                            <CheckCircle2 className="w-8 h-8 text-emerald-500" />
+                        </div>
+                        <h2 className="mt-4 text-lg font-bold text-slate-900">Pengajuan PKL Disetujui</h2>
+                        <p className="mt-1 text-[13px] text-slate-500 max-w-md mx-auto">
+                            Selamat! Pengajuan PKL Anda telah disetujui oleh Hubin. Silakan pantau proses penempatan pada halaman Status Penempatan.
+                        </p>
+                        <div className="max-w-md mx-auto mt-6 space-y-3 text-left">
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex items-start gap-3">
+                                <Building2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-[11px] text-slate-500 font-medium">Perusahaan Tujuan</p>
+                                    <p className="text-[13px] font-bold text-slate-900">{application.company_name}</p>
+                                </div>
+                            </div>
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex items-start gap-3">
+                                <FileText className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-[11px] text-slate-500 font-medium">Posisi</p>
+                                    <p className="text-[13px] font-bold text-slate-900">{application.desired_position}</p>
+                                </div>
+                            </div>
+                            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex items-start gap-3">
+                                <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-[11px] text-slate-500 font-medium">Status</p>
+                                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded-full text-[10px] font-semibold inline-block mt-0.5">Disetujui</span>
+                                </div>
+                            </div>
+                            {application.reviewed_at && (
+                                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 flex items-start gap-3">
+                                    <Clock className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="text-[11px] text-slate-500 font-medium">Disetujui Pada</p>
+                                        <p className="text-[13px] font-semibold text-slate-900">{new Date(application.reviewed_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <Link href="/pkl/status"
+                            className="mt-6 inline-flex px-6 py-3 bg-slate-900 text-white font-bold text-[12px] rounded-xl hover:bg-slate-800 items-center gap-1.5 transition-colors">
+                            Lihat Status Penempatan <ArrowRight className="w-4 h-4" />
+                        </Link>
+                    </div>
+                ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                     <div className="lg:col-span-2">
                         <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-sm space-y-5">
+                            {Object.keys(errors).length > 0 && (
+                                <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 space-y-1">
+                                    <h4 className="font-semibold text-rose-800 text-[13px]">Pengajuan gagal dikirim</h4>
+                                    {Object.values(errors).map((error, i) => (
+                                        <p key={i} className="text-[12px] text-rose-700 flex items-start gap-1.5">
+                                            <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" /> {error}
+                                        </p>
+                                    ))}
+                                </div>
+                            )}
                             <h3 className="text-[14px] font-bold text-slate-900 flex items-center gap-2"><Building2 className="w-4 h-4 text-emerald-500" /> Perusahaan Tujuan</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-3">
                                 {companies.map((comp) => (
@@ -65,19 +132,19 @@ export default function PklApplication({ student, companies, activePeriod, appli
                             <div><label className="block text-[12px] font-semibold text-slate-700 mb-1">Alamat</label><textarea value={data.company_address} onChange={(e) => setData('company_address', e.target.value)} rows={2} required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-300" /></div>
                             <div><label className="block text-[12px] font-semibold text-slate-700 mb-1">Posisi Magang</label><input type="text" value={data.desired_position} onChange={(e) => setData('desired_position', e.target.value)} required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-[12px] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-300" /></div>
                             <div className="pt-3 border-t border-slate-100 space-y-3">
-                                <h3 className="text-[13px] font-bold text-slate-900 flex items-center gap-1.5"><Upload className="w-4 h-4" /> Berkas</h3>
+                                <h3 className="text-[13px] font-bold text-slate-900 flex items-center gap-1.5"><Upload className="w-4 h-4" /> Berkas <span className="text-[10px] text-slate-400 font-normal">(Opsional)</span></h3>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="border border-dashed border-slate-300 rounded-xl p-4 hover:border-emerald-300 transition-colors">
                                         <FileText className="w-5 h-5 text-slate-400 mb-1.5" />
                                         <p className="text-[12px] font-semibold text-slate-900">CV</p>
-                                        <p className="text-[11px] text-slate-500">PDF max 5MB</p>
-                                        <input type="file" onChange={(e) => setData('cv_file', e.target.files ? e.target.files[0] : null)} className="mt-2 text-[11px] text-slate-500" />
+                                        <p className="text-[11px] text-slate-500">PDF/DOCX max 5MB</p>
+                                        <input type="file" onChange={(e) => setData('cv_file', e.target.files ? e.target.files[0] : null)} className="mt-2 text-[11px] text-slate-500" accept=".pdf,.doc,.docx" />
                                     </div>
                                     <div className="border border-dashed border-slate-300 rounded-xl p-4 hover:border-emerald-300 transition-colors">
                                         <FileText className="w-5 h-5 text-slate-400 mb-1.5" />
                                         <p className="text-[12px] font-semibold text-slate-900">Surat Pengantar</p>
                                         <p className="text-[11px] text-slate-500">PDF/DOCX max 5MB</p>
-                                        <input type="file" onChange={(e) => setData('cover_letter_file', e.target.files ? e.target.files[0] : null)} className="mt-2 text-[11px] text-slate-500" />
+                                        <input type="file" onChange={(e) => setData('cover_letter_file', e.target.files ? e.target.files[0] : null)} className="mt-2 text-[11px] text-slate-500" accept=".pdf,.doc,.docx" />
                                     </div>
                                 </div>
                             </div>
@@ -113,6 +180,7 @@ export default function PklApplication({ student, companies, activePeriod, appli
                         )}
                     </div>
                 </div>
+                )}
             </div>
         </DashboardLayout>
     );

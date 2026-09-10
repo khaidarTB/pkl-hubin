@@ -43,6 +43,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/pkl/pendaftaran', [PklApplicationController::class, 'pendaftaran'])->name('pkl.pendaftaran');
     Route::post('/pkl/pendaftaran', [PklApplicationController::class, 'store'])->name('pkl.pendaftaran.store');
     Route::get('/pkl/status', [PklApplicationController::class, 'status'])->name('pkl.status');
+    Route::get('/pkl/file/{id}', [PklApplicationController::class, 'showFile'])->name('pkl.file');
 
     // Admin Application Management
     Route::get('/admin/pengajuan', [PklApplicationController::class, 'adminIndex'])->name('admin.pengajuan.index');

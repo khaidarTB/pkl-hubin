@@ -36,7 +36,15 @@ class PklApplicationController extends Controller
     public function store(Request $request)
     {
         $user = $request->user();
-        $student = Student::where('user_id', $user->id)->firstOrFail();
+        $student = Student::with('latestApplication')->where('user_id', $user->id)->first();
+
+        if (!$student) {
+            return back()->with('error', 'Data profil siswa belum lengkap. Silakan hubungi Admin/Hubin untuk melengkapi data Anda sebelum mengajukan PKL.');
+        }
+
+        if ($student->latestApplication && $student->latestApplication->status === PklApplication::STATUS_APPROVED) {
+            return redirect()->route('pkl.status')->with('success', 'Pengajuan PKL Anda telah disetujui.');
+        }
 
         $validated = $request->validate([
             'company_id' => 'nullable|exists:companies,id',
@@ -68,8 +76,8 @@ class PklApplicationController extends Controller
             'company_address' => $validated['company_address'],
             'field_of_work' => $validated['field_of_work'],
             'desired_position' => $validated['desired_position'],
-            'cv_file' => $cvPath ?? 'documents/sample_cv.pdf',
-            'cover_letter_file' => $coverPath ?? 'documents/sample_cover.pdf',
+            'cv_file' => $cvPath,
+            'cover_letter_file' => $coverPath,
             'status' => PklApplication::STATUS_SUBMITTED,
             'submitted_at' => Carbon::now(),
         ]);
@@ -101,6 +109,39 @@ class PklApplicationController extends Controller
             'application' => $student ? $student->latestApplication : null,
             'placement' => $student ? $student->placement : null,
         ]);
+    }
+
+    // Download / preview uploaded application document
+    public function showFile(Request $request, $id)
+    {
+        $application = PklApplication::with('student')->findOrFail($id);
+
+        $user = $request->user();
+        $isOwner = $application->student->user_id === $user->id;
+        $canReview = $user->isAdmin() || $user->isGuru() || $user->isIndustri();
+
+        if (!$isOwner && !$canReview) {
+            abort(403);
+        }
+
+        $name = $request->query('file', 'cv');
+        $path = $name === 'cover_letter' ? $application->cover_letter_file : $application->cv_file;
+
+        if (!$path || !\Storage::disk('public')->exists($path)) {
+            abort(404, 'Berkas tidak ditemukan.');
+        }
+
+        $mime = \Storage::disk('public')->mimeType($path);
+        $downloadName = basename($path);
+
+        if ($request->query('download') === '1') {
+            return \Storage::disk('public')->download($path, $downloadName);
+        }
+
+        return response()->file(
+            \Storage::disk('public')->path($path),
+            ['Content-Type' => $mime, 'Content-Disposition' => 'inline; filename="' . $downloadName . '"']
+        );
     }
 
     // Hubin/Admin: List all applications
