@@ -21,11 +21,20 @@ export type AttendanceFailureReason =
     | 'OUTSIDE_ATTENDANCE_TIME'
     | 'STUDENT_NOT_ASSIGNED_TO_COMPANY'
     | 'COMPANY_LOCATION_NOT_CONFIGURED'
-    | 'ALREADY_ATTENDED';
+    | 'ALREADY_ATTENDED'
+    | 'NOT_CHECKED_IN'
+    | 'ALREADY_CHECKED_OUT';
 
-export type GeoLocationStatus = 'VERIFIED' | 'REJECTED' | null;
+export type GeoLocationStatus =
+    | 'VERIFIED'
+    | 'REJECTED'
+    | 'OUTSIDE_RADIUS'
+    | 'LOW_ACCURACY'
+    | null;
 
-export type GeoTimeStatus = 'ON_TIME' | 'LATE' | null;
+export type GeoTimeStatus = 'ON_TIME' | 'LATE' | 'OUTSIDE_WORKING_HOURS' | null;
+
+export type GeoAttendanceAction = 'CHECK_IN' | 'CHECK_OUT' | null;
 
 export type GeoAttendancePhase =
     | 'idle'
@@ -41,6 +50,8 @@ export interface GeoValidationCompany {
     latitude: number | null;
     longitude: number | null;
     allowed_radius: number | null;
+    jam_masuk?: string | null;
+    jam_keluar?: string | null;
 }
 
 /** Hasil final yang dihitung & divalidasi oleh server (Laravel). */
@@ -62,11 +73,15 @@ export interface GeoAttendanceResult {
     allowed_radius: number | null;
     location_status: GeoLocationStatus;
     time_status: GeoTimeStatus;
+    action?: GeoAttendanceAction;
+    code?: string | null;
+    success?: boolean;
 }
 
 export interface GeoAttendanceConfig {
     maxGpsAccuracy: number;
     defaultRadius: number;
+    onTimeGraceMinutes: number;
     window: {
         start: string;
         on_time_until: string;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { Company } from '@/Types';
-import { Building2, Plus, MapPin, Phone, Globe, Radar, Edit3, Trash2, X, Check, Search } from 'lucide-react';
+import { Building2, Plus, MapPin, Phone, Globe, Radar, Edit3, Trash2, X, Check, Search, Clock } from 'lucide-react';
 
 interface Props { companies: Company[]; }
 
@@ -16,7 +16,7 @@ export default function CompaniesIndex({ companies }: Props) {
     const addForm = useForm({
         name: '', address: '', city: '', phone: '', email: '', website: '',
         industry_type: 'Technology & Software', description: '', supervisor_name: '', student_quota: 10,
-        latitude: '', longitude: '', allowed_radius: 100,
+        latitude: '', longitude: '', allowed_radius: 100, jam_masuk: '', jam_keluar: '',
     });
 
     // Form Edit
@@ -24,7 +24,7 @@ export default function CompaniesIndex({ companies }: Props) {
         name: '', address: '', city: '', phone: '', email: '', website: '',
         industry_type: '', description: '', supervisor_name: '', student_quota: 10,
         latitude: '' as string | number, longitude: '' as string | number, allowed_radius: 100,
-        partnership_status: 'active',
+        partnership_status: 'active', jam_masuk: '', jam_keluar: '',
     });
 
     const handleAddSubmit = (e: React.FormEvent) => {
@@ -48,6 +48,8 @@ export default function CompaniesIndex({ companies }: Props) {
             latitude: comp.latitude ?? '',
             longitude: comp.longitude ?? '',
             allowed_radius: comp.allowed_radius || 100,
+            jam_masuk: comp.jam_masuk || '',
+            jam_keluar: comp.jam_keluar || '',
             partnership_status: comp.partnership_status || 'active',
         });
     };
@@ -140,6 +142,12 @@ export default function CompaniesIndex({ companies }: Props) {
                                                     <span className="font-semibold text-cyan-700">
                                                         GPS radius {comp.allowed_radius ?? 100} m
                                                     </span>
+                                                </p>
+                                            )}
+                                            {(comp.jam_masuk || comp.jam_keluar) && (
+                                                <p className="flex items-center gap-1.5">
+                                                    <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                                                    <span>Jam kerja {comp.jam_masuk || '—'}–{comp.jam_keluar || '—'}</span>
                                                 </p>
                                             )}
                                         </div>
@@ -252,11 +260,24 @@ export default function CompaniesIndex({ companies }: Props) {
                                         className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[11px]" />
                                 </div>
                             </div>
+                            <div className="grid grid-cols-3 gap-2 mt-2">
+                                <div>
+                                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Jam Masuk</label>
+                                    <input type="time" value={addForm.data.jam_masuk} onChange={(e) => addForm.setData('jam_masuk', e.target.value)}
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[11px]" />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Jam Keluar</label>
+                                    <input type="time" value={addForm.data.jam_keluar} onChange={(e) => addForm.setData('jam_keluar', e.target.value)}
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[11px]" />
+                                </div>
+                            </div>
                         </div>
                         <div className="flex items-center justify-end gap-2 pt-2">
                             <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 bg-slate-100 text-slate-600 font-semibold text-[12px] rounded-xl hover:bg-slate-200">Batal</button>
                             <button type="submit" disabled={addForm.processing} className="px-4 py-2 bg-slate-900 text-white font-bold text-[12px] rounded-xl hover:bg-slate-800">Simpan Perusahaan</button>
                         </div>
+                        <FormErrors errors={addForm.errors} />
                     </form>
                 </div>
             )}
@@ -340,6 +361,18 @@ export default function CompaniesIndex({ companies }: Props) {
                                         className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[11px]" />
                                 </div>
                             </div>
+                            <div className="grid grid-cols-3 gap-2 mt-2">
+                                <div>
+                                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Jam Masuk</label>
+                                    <input type="time" value={editForm.data.jam_masuk} onChange={(e) => editForm.setData('jam_masuk', e.target.value)}
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[11px]" />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-semibold text-slate-600 mb-1">Jam Keluar</label>
+                                    <input type="time" value={editForm.data.jam_keluar} onChange={(e) => editForm.setData('jam_keluar', e.target.value)}
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[11px]" />
+                                </div>
+                            </div>
                         </div>
 
                         <div className="flex items-center justify-end gap-2 pt-2">
@@ -348,6 +381,7 @@ export default function CompaniesIndex({ companies }: Props) {
                                 <Check className="w-4 h-4" /> Simpan Perubahan
                             </button>
                         </div>
+                        <FormErrors errors={editForm.errors} />
                     </form>
                 </div>
             )}
@@ -377,6 +411,23 @@ export default function CompaniesIndex({ companies }: Props) {
                 </div>
             )}
         </DashboardLayout>
+    );
+}
+
+function FormErrors({ errors }: { errors: Record<string, string> }) {
+    const entries = Object.entries(errors);
+    if (entries.length === 0) {
+        return null;
+    }
+
+    return (
+        <div className="rounded-xl bg-rose-50 border border-rose-200 px-4 py-3">
+            {entries.map(([field, message]) => (
+                <p key={field} className="text-[11px] font-semibold text-rose-700">
+                    {message}
+                </p>
+            ))}
+        </div>
     );
 }
 

@@ -25,6 +25,8 @@ export interface Company {
     latitude?: number | null;
     longitude?: number | null;
     allowed_radius?: number | null;
+    jam_masuk?: string | null;
+    jam_keluar?: string | null;
     placements_count?: number;
 }
 
@@ -225,8 +227,13 @@ export interface Attendance {
     company_longitude?: number | null;
     distance_from_company?: number | null;
     allowed_radius?: number | null;
-    location_status?: 'VERIFIED' | 'REJECTED' | null;
-    time_status?: 'ON_TIME' | 'LATE' | null;
+    location_status?: 'VERIFIED' | 'REJECTED' | 'OUTSIDE_RADIUS' | 'LOW_ACCURACY' | null;
+    time_status?: 'ON_TIME' | 'LATE' | 'OUTSIDE_WORKING_HOURS' | null;
+    check_out_server_timestamp?: string;
+    check_out_latitude?: number | null;
+    check_out_longitude?: number | null;
+    check_out_gps_accuracy?: number | null;
+    check_out_distance_from_company?: number | null;
     student?: Student;
 }
 

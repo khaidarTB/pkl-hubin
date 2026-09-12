@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Attendance;
 use App\Models\AttendanceAttempt;
+use App\Models\Setting;
 use App\Models\Student;
 use App\Services\Support\GeoCalculator;
 use Carbon\Carbon;
@@ -20,28 +21,48 @@ use Illuminate\Support\Facades\DB;
 class AttendanceService
 {
     public const RESULT_HADIR = 'HADIR';
+
     public const RESULT_TERLAMBAT = 'TERLAMBAT';
+
     public const RESULT_DITOLAK = 'DITOLAK';
 
+    public const ACTION_CHECK_IN = 'CHECK_IN';
+
+    public const ACTION_CHECK_OUT = 'CHECK_OUT';
+
     public const FAILURE_LOCATION_OUTSIDE_RADIUS = 'LOCATION_OUTSIDE_RADIUS';
+
     public const FAILURE_GPS_ACCURACY_TOO_LOW = 'GPS_ACCURACY_TOO_LOW';
+
     public const FAILURE_OUTSIDE_ATTENDANCE_TIME = 'OUTSIDE_ATTENDANCE_TIME';
+
     public const FAILURE_STUDENT_NOT_ASSIGNED = 'STUDENT_NOT_ASSIGNED_TO_COMPANY';
+
     public const FAILURE_COMPANY_NOT_CONFIGURED = 'COMPANY_LOCATION_NOT_CONFIGURED';
+
     public const FAILURE_ALREADY_ATTENDED = 'ALREADY_ATTENDED';
 
+    public const FAILURE_NOT_CHECKED_IN = 'NOT_CHECKED_IN';
+
+    public const FAILURE_ALREADY_CHECKED_OUT = 'ALREADY_CHECKED_OUT';
+
     private const LOCATION_VERIFIED = 'VERIFIED';
+
     private const LOCATION_REJECTED = 'REJECTED';
+
+    private const LOCATION_OUTSIDE_RADIUS = 'OUTSIDE_RADIUS';
+
+    private const LOCATION_LOW_ACCURACY = 'LOW_ACCURACY';
+
     private const TIME_ON_TIME = 'ON_TIME';
+
     private const TIME_LATE = 'LATE';
+
+    private const TIME_OUTSIDE_WORKING_HOURS = 'OUTSIDE_WORKING_HOURS';
 
     /**
      * Proses absensi masuk berbasis GPS.
      *
-     * @param  Student  $student
-     * @param  float  $latitude
-     * @param  float  $longitude
-     * @param  float  $accuracy
      * @return array{status: string, failure_reason: ?string, message: string, attendance: ?Attendance, ...}
      */
     public function processCheckin(Student $student, float $latitude, float $longitude, float $accuracy): array
@@ -95,13 +116,13 @@ class AttendanceService
         }
 
         // 5. Akurasi GPS harus cukup baik.
-        $maxAccuracy = (float) config('attendance.max_gps_accuracy', 50);
+        $maxAccuracy = (float) Setting::get('max_gps_accuracy', config('attendance.max_gps_accuracy', 50));
         if ($accuracy > $maxAccuracy) {
             return $this->reject(
                 $student, $company, $latitude, $longitude, $accuracy,
                 self::RESULT_DITOLAK, self::FAILURE_GPS_ACCURACY_TOO_LOW,
                 "Akurasi GPS {$accuracy} m melebihi batas maksimal {$maxAccuracy} m.", $now,
-                $distance, $allowedRadius
+                $distance, $allowedRadius, self::LOCATION_LOW_ACCURACY
             );
         }
 
@@ -111,7 +132,7 @@ class AttendanceService
                 $student, $company, $latitude, $longitude, $accuracy,
                 self::RESULT_DITOLAK, self::FAILURE_LOCATION_OUTSIDE_RADIUS,
                 "Anda berada di luar radius lokasi PKL ({$this->humanDistance($distance)} > {$allowedRadius} m).", $now,
-                $distance, $allowedRadius
+                $distance, $allowedRadius, self::LOCATION_OUTSIDE_RADIUS
             );
         }
 
@@ -125,14 +146,14 @@ class AttendanceService
             );
         }
 
-        // 8. Validasi jendela waktu check-in.
-        [$timeStatus, $timeFailure] = $this->evaluateCheckInWindow($now);
+        // 8. Validasi jendela waktu check-in sesuai jam kerja perusahaan.
+        [$timeStatus, $timeFailure] = $this->evaluateCheckInWindow($now, $company);
         if ($timeFailure !== null) {
             return $this->reject(
                 $student, $company, $latitude, $longitude, $accuracy,
                 self::RESULT_DITOLAK, $timeFailure,
                 'Di luar jendela waktu absensi masuk. Hubungi admin bila ada kendala.', $now,
-                $distance, $allowedRadius, self::LOCATION_VERIFIED
+                $distance, $allowedRadius, self::LOCATION_VERIFIED, self::TIME_OUTSIDE_WORKING_HOURS
             );
         }
 
@@ -200,6 +221,168 @@ class AttendanceService
             'allowed_radius' => $allowedRadius,
             'location_status' => self::LOCATION_VERIFIED,
             'time_status' => $timeStatus,
+            'action' => self::ACTION_CHECK_IN,
+            'code' => $resultStatus,
+            'success' => true,
+        ];
+    }
+
+    /**
+     * Proses absensi pulang berbasis GPS. Mirip check-in: jarak, status,
+     * dan waktu dihitung ulang sepenuhnya di server.
+     */
+    public function processCheckOut(Student $student, float $latitude, float $longitude, float $accuracy): array
+    {
+        $now = now();
+        $today = $now->toDateString();
+
+        $placement = $student->placement;
+        $company = $placement?->company;
+
+        // 1. Penempatan PKL aktif.
+        if (! $placement || $placement->status !== 'Aktif') {
+            return $this->reject(
+                $student, null, $latitude, $longitude, $accuracy,
+                self::RESULT_DITOLAK, self::FAILURE_STUDENT_NOT_ASSIGNED,
+                'Penempatan PKL aktif tidak ditemukan. Hubungi admin Hubin.', $now
+            );
+        }
+
+        // 2. Perusahaan tujuan.
+        if (! $company) {
+            return $this->reject(
+                $student, null, $latitude, $longitude, $accuracy,
+                self::RESULT_DITOLAK, self::FAILURE_STUDENT_NOT_ASSIGNED,
+                'Siswa belum ditempatkan di perusahaan tujuan PKL.', $now
+            );
+        }
+
+        // 3. Perusahaan terkonfigurasi.
+        if (! $company->latitude || ! $company->longitude) {
+            return $this->reject(
+                $student, $company, $latitude, $longitude, $accuracy,
+                self::RESULT_DITOLAK, self::FAILURE_COMPANY_NOT_CONFIGURED,
+                "Koordinat lokasi {$company->name} belum dikonfigurasi admin.", $now
+            );
+        }
+
+        $distance = GeoCalculator::distanceMeters(
+            $latitude, $longitude,
+            (float) $company->latitude, (float) $company->longitude
+        );
+        $allowedRadius = (int) ($company->allowed_radius ?? config('attendance.default_radius', 100));
+
+        // 4. Harus sudah check-in hari ini.
+        $attendance = Attendance::where('student_id', $student->id)->where('date', $today)->first();
+        if (! $attendance) {
+            return $this->reject(
+                $student, $company, $latitude, $longitude, $accuracy,
+                self::RESULT_DITOLAK, self::FAILURE_NOT_CHECKED_IN,
+                'Anda belum melakukan check-in hari ini.', $now,
+                $distance, $allowedRadius, self::LOCATION_VERIFIED
+            );
+        }
+
+        // 5. Cegah check-out ganda.
+        if ($attendance->check_out) {
+            return $this->reject(
+                $student, $company, $latitude, $longitude, $accuracy,
+                self::RESULT_DITOLAK, self::FAILURE_ALREADY_CHECKED_OUT,
+                'Anda sudah melakukan check-out hari ini.', $now,
+                $distance, $allowedRadius, self::LOCATION_VERIFIED
+            );
+        }
+
+        // 6. Akurasi GPS.
+        $maxAccuracy = (float) Setting::get('max_gps_accuracy', config('attendance.max_gps_accuracy', 50));
+        if ($accuracy > $maxAccuracy) {
+            return $this->reject(
+                $student, $company, $latitude, $longitude, $accuracy,
+                self::RESULT_DITOLAK, self::FAILURE_GPS_ACCURACY_TOO_LOW,
+                "Akurasi GPS {$accuracy} m melebihi batas maksimal {$maxAccuracy} m.", $now,
+                $distance, $allowedRadius, self::LOCATION_LOW_ACCURACY
+            );
+        }
+
+        // 7. Jarak harus dalam radius perusahaan.
+        if ($distance > $allowedRadius) {
+            return $this->reject(
+                $student, $company, $latitude, $longitude, $accuracy,
+                self::RESULT_DITOLAK, self::FAILURE_LOCATION_OUTSIDE_RADIUS,
+                "Anda berada di luar radius lokasi PKL ({$this->humanDistance($distance)} > {$allowedRadius} m).", $now,
+                $distance, $allowedRadius, self::LOCATION_OUTSIDE_RADIUS
+            );
+        }
+
+        // 8. Check-out tidak boleh sebelum jam masuk perusahaan.
+        $window = config('attendance.check_in_window');
+        $startAt = $company->jam_masuk ?: $window['start'];
+        $start = Carbon::parse($now->toDateString().' '.$startAt);
+        if ($now->lt($start)) {
+            return $this->reject(
+                $student, $company, $latitude, $longitude, $accuracy,
+                self::RESULT_DITOLAK, self::FAILURE_OUTSIDE_ATTENDANCE_TIME,
+                'Di luar jam kerja — belum waktunya check-out.', $now,
+                $distance, $allowedRadius, self::LOCATION_VERIFIED, self::TIME_OUTSIDE_WORKING_HOURS
+            );
+        }
+
+        $saved = DB::transaction(function () use ($student, $now, $distance, $latitude, $longitude, $accuracy, $today) {
+            $att = Attendance::where('student_id', $student->id)
+                ->where('date', $today)
+                ->lockForUpdate()
+                ->first();
+
+            if (! $att || $att->check_out) {
+                return null;
+            }
+
+            $att->check_out = $now->format('H:i');
+            $att->check_out_server_timestamp = $now;
+            $att->check_out_latitude = $latitude;
+            $att->check_out_longitude = $longitude;
+            $att->check_out_gps_accuracy = $accuracy;
+            $att->check_out_distance_from_company = round($distance, 2);
+            $att->save();
+
+            return $att;
+        });
+
+        if (! $saved) {
+            return $this->reject(
+                $student, $company, $latitude, $longitude, $accuracy,
+                self::RESULT_DITOLAK, self::FAILURE_ALREADY_CHECKED_OUT,
+                'Anda sudah melakukan check-out hari ini.', $now,
+                $distance, $allowedRadius, self::LOCATION_VERIFIED
+            );
+        }
+
+        return [
+            'status' => self::RESULT_HADIR,
+            'failure_reason' => null,
+            'message' => 'Check-out berhasil dicatat. Lokasi terverifikasi.',
+            'attendance' => $saved,
+            'server_timestamp' => $now,
+            'server_date' => $today,
+            'server_time' => $now->format('H:i:s').' WIB',
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'gps_accuracy' => $accuracy,
+            'company' => [
+                'id' => $company->id,
+                'name' => $company->name,
+                'latitude' => (float) $company->latitude,
+                'longitude' => (float) $company->longitude,
+            ],
+            'company_latitude' => (float) $company->latitude,
+            'company_longitude' => (float) $company->longitude,
+            'distance_from_company' => round($distance, 2),
+            'allowed_radius' => $allowedRadius,
+            'location_status' => self::LOCATION_VERIFIED,
+            'time_status' => self::TIME_ON_TIME,
+            'action' => self::ACTION_CHECK_OUT,
+            'code' => self::ACTION_CHECK_OUT,
+            'success' => true,
         ];
     }
 
@@ -209,14 +392,33 @@ class AttendanceService
     }
 
     /**
+     * Jendela waktu check-in mengikuti jam kerja perusahaan (jam_masuk/jam_keluar).
+     * Perusahaan tanpa jam kerja memakai konfigurasi global.
+     *
      * @return array{?string, ?string} [time_status, failure_reason]
      */
-    private function evaluateCheckInWindow(Carbon $now): array
+    private function evaluateCheckInWindow(Carbon $now, $company): array
     {
         $window = config('attendance.check_in_window');
-        $start = Carbon::parse($now->toDateString().' '.$window['start']);
-        $onTimeUntil = Carbon::parse($now->toDateString().' '.$window['on_time_until']);
-        $end = Carbon::parse($now->toDateString().' '.$window['end']);
+        $grace = (int) config('attendance.on_time_grace_minutes', 30);
+
+        $jamMasuk = $company?->jam_masuk;
+        $jamKeluar = $company?->jam_keluar;
+
+        $startRaw = $jamMasuk ?: $window['start'];
+        $onTimeRaw = $jamMasuk
+            ? Carbon::parse($now->toDateString().' '.$jamMasuk)->addMinutes($grace)->format('H:i')
+            : $window['on_time_until'];
+        $endRaw = $jamKeluar ?: $window['end'];
+
+        $start = Carbon::parse($now->toDateString().' '.$startRaw);
+        $onTimeUntil = Carbon::parse($now->toDateString().' '.$onTimeRaw);
+        $end = Carbon::parse($now->toDateString().' '.$endRaw);
+
+        // Lindungi konfigurasi invalid (jam keluar sebelum jam masuk).
+        if ($end->lte($start)) {
+            return [null, self::FAILURE_OUTSIDE_ATTENDANCE_TIME];
+        }
 
         if ($now->lt($start) || $now->gt($end)) {
             return [null, self::FAILURE_OUTSIDE_ATTENDANCE_TIME];
@@ -237,7 +439,8 @@ class AttendanceService
         Carbon $now,
         ?float $distance = null,
         ?int $allowedRadius = null,
-        ?string $locationStatus = self::LOCATION_REJECTED
+        ?string $locationStatus = self::LOCATION_REJECTED,
+        ?string $timeStatus = null
     ): array {
         $this->logAttempt($student, $company, $now, $latitude, $longitude, $accuracy, $distance, $allowedRadius, $result, $reason);
 
@@ -265,7 +468,10 @@ class AttendanceService
             'distance_from_company' => $distance !== null ? round($distance, 2) : null,
             'allowed_radius' => $allowedRadius,
             'location_status' => $locationStatus,
-            'time_status' => null,
+            'time_status' => $timeStatus,
+            'action' => null,
+            'code' => $reason,
+            'success' => false,
         ];
     }
 

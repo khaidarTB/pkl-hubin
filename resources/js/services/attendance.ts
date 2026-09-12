@@ -9,8 +9,20 @@ import type { GeoAttendanceResult, StudentLocation, SubmitGeoResult } from '@/Ty
  * timestamp) — semua nilai tersebut TIDAK pernah diterima dari client.
  */
 export async function submitGeoAttendance(location: StudentLocation): Promise<SubmitGeoResult> {
+    return postGeo('/absensi/geo-checkin', location);
+}
+
+/**
+ * Check-out GPS: sama sekali tidak mempercayai keputusan frontend.
+ * Hanya koordinat mentah yang dikirim; jarak/status/waktu dihitung server.
+ */
+export async function submitGeoCheckOut(location: StudentLocation): Promise<SubmitGeoResult> {
+    return postGeo('/absensi/checkout', location);
+}
+
+async function postGeo(url: string, location: StudentLocation): Promise<SubmitGeoResult> {
     try {
-        const { data } = await axios.post<GeoAttendanceResult>('/absensi/geo-checkin', location);
+        const { data } = await axios.post<GeoAttendanceResult>(url, location);
 
         return { ok: true, result: data };
     } catch (error) {

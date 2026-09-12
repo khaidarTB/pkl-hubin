@@ -1,12 +1,12 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AIController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JournalController;
+use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\VisitController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
@@ -14,7 +14,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/students/{id}', [MonitoringController::class, 'show']);
 
     Route::get('/attendance', [AttendanceController::class, 'index']);
-    Route::post('/attendance', [AttendanceController::class, 'checkIn']);
+    Route::post('/attendance', [AttendanceController::class, 'geoCheckIn']);
 
     Route::get('/journals', [JournalController::class, 'index']);
     Route::post('/journals', [JournalController::class, 'store']);

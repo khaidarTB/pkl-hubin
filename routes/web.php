@@ -1,26 +1,27 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\LandingController;
+use App\Http\Controllers\Admin\PklPeriodController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\AIController;
+use App\Http\Controllers\AssessmentAspectController;
+use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\AttendanceSettingsController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\PklApplicationController;
-use App\Http\Controllers\PlacementController;
-use App\Http\Controllers\VisitController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\DocumentVerificationController;
-use App\Http\Controllers\CompanyController;
-use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\JournalController;
-use App\Http\Controllers\AssessmentController;
-use App\Http\Controllers\AssessmentAspectController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\MonitoringController;
-use App\Http\Controllers\ReportController;
 use App\Http\Controllers\NotificationController;
-use App\Http\Controllers\AIController;
+use App\Http\Controllers\PklApplicationController;
+use App\Http\Controllers\PlacementController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\VisitController;
 use App\Http\Controllers\WhatsAppController;
-use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\PklPeriodController;
+use Illuminate\Support\Facades\Route;
 
 // Public Routes
 Route::get('/', [LandingController::class, 'index'])->name('landing');
@@ -82,7 +83,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/admin/verifikasi-dokumen/{id}/revoke', [DocumentVerificationController::class, 'revoke'])->name('admin.verification.revoke');
         Route::post('/admin/verifikasi-dokumen/{id}/regenerate-qr', [DocumentVerificationController::class, 'regenerateQr'])->name('admin.verification.regenerate');
 
-// Admin User Management (Guru)
+        // Admin User Management (Guru)
         Route::get('/admin/guru', [UserController::class, 'index'])->name('admin.guru.index');
         Route::post('/admin/guru', [UserController::class, 'store'])->name('admin.guru.store');
         Route::delete('/admin/guru/{user}', [UserController::class, 'destroy'])->name('admin.guru.destroy');
@@ -104,13 +105,17 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/admin/periode', [PklPeriodController::class, 'store'])->name('admin.periode.store');
         Route::put('/admin/periode/{id}', [PklPeriodController::class, 'update'])->name('admin.periode.update');
         Route::delete('/admin/periode/{id}', [PklPeriodController::class, 'destroy'])->name('admin.periode.destroy');
+
+        // Admin Attendance Settings (Batas Akurasi GPS)
+        Route::get('/admin/pengaturan-absensi', [AttendanceSettingsController::class, 'index'])->name('admin.attendance-settings.index');
+        Route::put('/admin/pengaturan-absensi', [AttendanceSettingsController::class, 'update'])->name('admin.attendance-settings.update');
     });
 
     // Attendance
     Route::get('/absensi', [AttendanceController::class, 'index'])->name('absensi.index');
     Route::post('/absensi/geo-checkin', [AttendanceController::class, 'geoCheckIn'])->name('absensi.geo-checkin');
     Route::get('/absensi/{attendance}', [AttendanceController::class, 'show'])->name('absensi.show');
-    Route::post('/absensi/checkout', [AttendanceController::class, 'checkOut'])->name('absensi.checkout');
+    Route::post('/absensi/checkout', [AttendanceController::class, 'geoCheckOut'])->name('absensi.checkout');
 
     // E-Journal
     Route::get('/jurnal', [JournalController::class, 'index'])->name('journals.index');

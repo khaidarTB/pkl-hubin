@@ -4,7 +4,7 @@ import {
     Proportions, Users, Building2, CalendarCheck, BookOpen, 
     GraduationCap, LineChart, FileSpreadsheet, Sparkles, 
     CheckSquare, LogOut, FileText, MapPin, Calendar, QrCode,
-    Award, ListChecks
+    Award, ListChecks, Settings2
 } from 'lucide-react';
 import { PageProps, Role } from '@/Types';
 
@@ -58,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                             { label: 'Presensi & Geofence', href: '/absensi', icon: CalendarCheck },
                             { label: 'E-Jurnal Kegiatan', href: '/jurnal', icon: BookOpen },
                             { label: 'Kunjungan Guru', href: '/kunjungan', icon: CheckSquare },
+                            { label: 'Pengaturan Presensi GPS', href: '/admin/pengaturan-absensi', icon: Settings2 },
                         ],
                     },
                     {

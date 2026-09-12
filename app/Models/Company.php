@@ -25,6 +25,8 @@ class Company extends Model
         'latitude',
         'longitude',
         'allowed_radius',
+        'jam_masuk',
+        'jam_keluar',
     ];
 
     protected $casts = [
@@ -32,6 +34,16 @@ class Company extends Model
         'longitude' => 'float',
         'allowed_radius' => 'integer',
     ];
+
+    public function getJamMasukAttribute(?string $value): ?string
+    {
+        return $value !== null ? substr($value, 0, 5) : null;
+    }
+
+    public function getJamKeluarAttribute(?string $value): ?string
+    {
+        return $value !== null ? substr($value, 0, 5) : null;
+    }
 
     public function placements()
     {

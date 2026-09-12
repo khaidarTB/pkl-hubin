@@ -25,13 +25,8 @@ use Throwable;
  */
 class GeminiService
 {
-    /** Ordered candidates tried when the primary model is unavailable.
-     * Lite variants respond in ~1s; the full 3.5 model is the quality fallback. */
-    protected const FALLBACK_MODELS = [
-        'gemini-flash-lite-latest',
-        'gemini-3.5-flash-lite',
-        'gemini-3.5-flash',
-    ];
+    /** Nexa AI memakai satu model saja (single-model mode); fallback dihapus. */
+    protected const FALLBACK_MODELS = [];
 
     protected const CACHE_HEALTHY = 'gemini.healthy_model';
 
@@ -53,7 +48,7 @@ class GeminiService
 
         return new static(
             apiKey: (string) config('services.gemini.api_key'),
-            model: (string) config('services.gemini.model', 'gemini-2.5-flash'),
+            model: (string) config('services.gemini.model', 'gemini-3-flash-preview'),
             baseUrl: (string) config('services.gemini.base_url', 'https://generativelanguage.googleapis.com/v1beta'),
             timeout: (int) config('services.gemini.timeout', 30),
             fallbackModels: array_values(array_diff($configured, [(string) config('services.gemini.model')])),
@@ -86,7 +81,7 @@ class GeminiService
             if ($result->ok) {
                 // Remember the working model so later calls skip dead ones.
                 Cache::put(self::CACHE_HEALTHY, $model, now()->addMinutes(5));
-                Cache::forget(self::CACHE_THROTTLED_PREFIX . $model);
+                Cache::forget(self::CACHE_THROTTLED_PREFIX.$model);
 
                 return $result;
             }
@@ -103,10 +98,10 @@ class GeminiService
 
             if ($result->status === 429) {
                 // Skip this model for the next minute (quota exhausted).
-                Cache::put(self::CACHE_THROTTLED_PREFIX . $model, true, now()->addMinute());
+                Cache::put(self::CACHE_THROTTLED_PREFIX.$model, true, now()->addMinute());
             } elseif ($result->status === null) {
                 // Hanging/unreachable upstream — also skip for a while.
-                Cache::put(self::CACHE_THROTTLED_PREFIX . $model, true, now()->addMinutes(2));
+                Cache::put(self::CACHE_THROTTLED_PREFIX.$model, true, now()->addMinutes(2));
             }
 
             $lastError = $result;
@@ -131,7 +126,7 @@ class GeminiService
         )));
 
         $throttled = collect($all)
-            ->filter(fn ($m) => Cache::has(self::CACHE_THROTTLED_PREFIX . $m));
+            ->filter(fn ($m) => Cache::has(self::CACHE_THROTTLED_PREFIX.$m));
 
         $healthy = Cache::get(self::CACHE_HEALTHY);
 
@@ -156,7 +151,7 @@ class GeminiService
      */
     protected function callModel(string $model, string $systemInstruction, array $contents): GeminiResult
     {
-        $useThinking = ! Cache::has(self::CACHE_NO_THINKING_PREFIX . $model);
+        $useThinking = ! Cache::has(self::CACHE_NO_THINKING_PREFIX.$model);
 
         $payload = [
             'system_instruction' => [
@@ -172,8 +167,13 @@ class GeminiService
             'generationConfig' => array_filter([
                 'temperature' => 0.4,
                 'maxOutputTokens' => 1200,
-                // Flash models think by default; disable for latency & quota.
-                'thinkingConfig' => $useThinking ? ['thinkingBudget' => 0] : null,
+                // Fire & forget: matikan thinking biar respons cepat & hemat.
+                // Gemini 3.x memakai thinkingLevel; generasi lama pakai thinkingBudget.
+                'thinkingConfig' => $useThinking
+                    ? (str_starts_with($model, 'gemini-3')
+                        ? ['thinkingLevel' => 'minimal']
+                        : ['thinkingBudget' => 0])
+                    : null,
             ]),
         ];
 
@@ -221,7 +221,7 @@ class GeminiService
             // thinking directive, remember the incompatibility and retry this
             // model once without it before treating the failure as final.
             if ($response->status() === 400 && $useThinking) {
-                Cache::put(self::CACHE_NO_THINKING_PREFIX . $model, true, now()->addDay());
+                Cache::put(self::CACHE_NO_THINKING_PREFIX.$model, true, now()->addDay());
 
                 return $this->callModelWithoutThinking($model, $systemInstruction, $contents);
             }

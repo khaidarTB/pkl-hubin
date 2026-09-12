@@ -2,22 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
 use App\Http\Requests\GeoCheckinRequest;
 use App\Models\Attendance;
 use App\Models\AttendanceAttempt;
 use App\Models\Company;
+use App\Models\Setting;
 use App\Models\Student;
 use App\Services\AttendanceService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AttendanceController extends Controller
 {
-    public function __construct(private AttendanceService $attendanceService)
-    {
-    }
+    public function __construct(private AttendanceService $attendanceService) {}
 
     public function index(Request $request): Response
     {
@@ -57,8 +56,9 @@ class AttendanceController extends Controller
             'todayDate' => Carbon::now()->isoFormat('D MMMM YYYY'),
             'currentTime' => Carbon::now()->format('H:i'),
             'config' => [
-                'maxGpsAccuracy' => config('attendance.max_gps_accuracy'),
+                'maxGpsAccuracy' => (float) Setting::get('max_gps_accuracy', config('attendance.max_gps_accuracy', 50)),
                 'defaultRadius' => config('attendance.default_radius'),
+                'onTimeGraceMinutes' => config('attendance.on_time_grace_minutes'),
                 'window' => config('attendance.check_in_window'),
             ],
         ]);
@@ -136,6 +136,34 @@ class AttendanceController extends Controller
         return response()->json($result, $result['status'] === 'DITOLAK' ? 422 : 200);
     }
 
+    /**
+     * Check-out berbasis GPS. Sama seperti check-in: hanya koordinat mentah dari
+     * browser yang diterima; jarak, status, dan waktu ditentukan ulang di server.
+     */
+    public function geoCheckOut(GeoCheckinRequest $request)
+    {
+        $user = $request->user();
+        $student = Student::where('user_id', $user->id)->first();
+
+        if (! $student) {
+            return response()->json([
+                'status' => 'DITOLAK',
+                'failure_reason' => 'STUDENT_NOT_ASSIGNED_TO_COMPANY',
+                'message' => 'Data siswa tidak ditemukan. Hubungi admin Hubin.',
+                'attendance' => null,
+            ], 422);
+        }
+
+        $result = $this->attendanceService->processCheckOut(
+            $student,
+            (float) $request->input('latitude'),
+            (float) $request->input('longitude'),
+            (float) $request->input('accuracy')
+        );
+
+        return response()->json($result, $result['status'] === 'DITOLAK' ? 422 : 200);
+    }
+
     public function show(Request $request, int $id): Response
     {
         $user = $request->user();
@@ -162,20 +190,5 @@ class AttendanceController extends Controller
             'attempt' => $attempt,
             'isOwner' => $isOwner,
         ]);
-    }
-
-    public function checkOut(Request $request)
-    {
-        $user = $request->user();
-        $student = Student::where('user_id', $user->id)->firstOrFail();
-
-        $today = Carbon::today()->format('Y-m-d');
-        $attendance = Attendance::where('student_id', $student->id)->where('date', $today)->firstOrFail();
-
-        $attendance->update([
-            'check_out' => Carbon::now()->format('H:i'),
-        ]);
-
-        return back()->with('success', 'Absensi pulang berhasil dicatat.');
     }
 }

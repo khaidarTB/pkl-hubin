@@ -47,14 +47,14 @@ return [
 
     'gemini' => [
         'api_key' => env('AI_API_KEY'),
-        'model' => env('AI_MODEL', 'gemini-2.5-flash'),
+        // Nexa AI memakai satu model saja (Gemini 3 Flash, konteks input 1M token).
+        'model' => env('AI_MODEL', 'gemini-3-flash-preview'),
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),
         'timeout' => (int) env('GEMINI_TIMEOUT', 15),
-        // Tried in order when the primary model is rate limited / down.
-        // Each model has its own upstream quota bucket.
+        // Fallback sengaja dinonaktifkan: Nexa AI hanya menggunakan satu model.
         'fallback_models' => array_filter(array_map('trim', explode(',', (string) env(
             'GEMINI_FALLBACK_MODELS',
-            'gemini-flash-latest,gemini-3.5-flash,gemini-flash-lite-latest'
+            ''
         )))),
     ],
 
