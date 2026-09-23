@@ -2,6 +2,14 @@ import React from 'react';
 import { Link } from '@inertiajs/react';
 import { ShieldCheck, Heart, Building2 } from 'lucide-react';
 
+const supportersLogo = [
+    "/img/supporters/jhic_2.png",
+    "/img/supporters/jagoan_hosting_logo.png",
+    "/img/supporters/komdigi.png",
+    "/img/supporters/garuda_spark.png",
+    "/img/supporters/ngalup.png",
+]
+
 export const Footer: React.FC = () => {
     return (
         <footer className="bg-slate-950 text-white border-t border-slate-800 py-12">
@@ -50,7 +58,16 @@ export const Footer: React.FC = () => {
                 <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
                     <p>© 2026 Hubin SMK Taruna Bangsa — PKLConnect System. All rights reserved.</p>
                     <p className="flex items-center gap-1">
-                        Dikembangkan dengan <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" /> untuk SMK Taruna Bangsa
+                        Didukung oleh : 
+                    <div className="container-supporters-logo">
+                        {
+                        supportersLogo.map((supporterLogo, i) => {
+                            return (
+                                <img key={i} className='w-15 h-auto' src={supporterLogo} alt="" />
+                            )
+                        })
+                    }
+                    </div>
                     </p>
                 </div>
             </div>
