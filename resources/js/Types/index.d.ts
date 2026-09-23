@@ -105,6 +105,30 @@ export interface Placement {
     industrySupervisor?: User;
 }
 
+export interface PklExtension {
+    id: number;
+    placement_id: number;
+    student_id: number;
+    requested_by: number;
+    requester_role: string;
+    old_start_date?: string | null;
+    old_end_date: string;
+    requested_start_date: string;
+    requested_end_date: string;
+    reason: string;
+    extension_letter_path?: string | null;
+    extension_letter_original_name?: string | null;
+    status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+    reviewed_by?: number | null;
+    reviewed_at?: string | null;
+    review_feedback?: string | null;
+    created_at?: string;
+    placement?: Placement;
+    student?: Student;
+    requester?: User;
+    reviewer?: User;
+}
+
 export interface Visit {
     id: number;
     teacher_id: number;

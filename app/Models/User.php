@@ -74,4 +74,14 @@ class User extends Authenticatable
     {
         return $this->role === 'siswa';
     }
+
+    public function requestedExtensions()
+    {
+        return $this->hasMany(PklExtension::class, 'requested_by');
+    }
+
+    public function reviewedExtensions()
+    {
+        return $this->hasMany(PklExtension::class, 'reviewed_by');
+    }
 }

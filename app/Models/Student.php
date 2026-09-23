@@ -62,4 +62,9 @@ class Student extends Model
     {
         return $this->hasOne(Assessment::class);
     }
+
+    public function pklExtensions()
+    {
+        return $this->hasMany(PklExtension::class);
+    }
 }

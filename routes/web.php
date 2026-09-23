@@ -17,6 +17,7 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\MonitoringController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PklApplicationController;
+use App\Http\Controllers\PklExtensionController;
 use App\Http\Controllers\PlacementController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\VisitController;
@@ -45,6 +46,15 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/pkl/pendaftaran', [PklApplicationController::class, 'store'])->name('pkl.pendaftaran.store');
     Route::get('/pkl/status', [PklApplicationController::class, 'status'])->name('pkl.status');
     Route::get('/pkl/file/{id}', [PklApplicationController::class, 'showFile'])->name('pkl.file');
+
+    // PKL Extension Workflow (Guru, Admin)
+    Route::get('/perpanjangan', [PklExtensionController::class, 'index'])->name('perpanjangan.index');
+    Route::post('/perpanjangan', [PklExtensionController::class, 'store'])->name('perpanjangan.store');
+    Route::get('/perpanjangan/{id}', [PklExtensionController::class, 'show'])->name('perpanjangan.show');
+    Route::post('/perpanjangan/{id}/approve', [PklExtensionController::class, 'approve'])->name('perpanjangan.approve');
+    Route::post('/perpanjangan/{id}/reject', [PklExtensionController::class, 'reject'])->name('perpanjangan.reject');
+    Route::post('/perpanjangan/{id}/cancel', [PklExtensionController::class, 'cancel'])->name('perpanjangan.cancel');
+    Route::get('/perpanjangan/{id}/file', [PklExtensionController::class, 'downloadLetter'])->name('perpanjangan.file');
 
     // Admin Application Management
     Route::get('/admin/pengajuan', [PklApplicationController::class, 'adminIndex'])->name('admin.pengajuan.index');

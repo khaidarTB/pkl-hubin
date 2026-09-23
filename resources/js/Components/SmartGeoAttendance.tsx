@@ -9,6 +9,7 @@ import {
     LogOut,
     MapPin,
     Navigation,
+    RotateCcw,
     SatelliteDish,
     ShieldCheck,
     XCircle,
@@ -17,13 +18,14 @@ import type { Attendance } from '@/Types';
 import type {
     AttendanceFailureReason,
     AttendanceResultStatus,
+    GPSProgressState,
     GeoAttendanceConfig,
     GeoAttendancePhase,
     GeoAttendanceResult,
     GeoValidationCompany,
     StudentLocation,
 } from '@/Types/attendance';
-import { estimateDistance, formatDistance, getCurrentLocation, getGeolocationErrorMessage } from '@/services/geolocation';
+import { acquireStableLocation, estimateDistance, formatDistance } from '@/services/geolocation';
 import { submitGeoAttendance, submitGeoCheckOut } from '@/services/attendance';
 
 interface Props {
@@ -38,7 +40,7 @@ type GeoMode = 'check_in' | 'check_out';
 
 const FAILURE_LABELS: Record<AttendanceFailureReason, string> = {
     LOCATION_OUTSIDE_RADIUS: 'Anda berada di luar radius lokasi PKL.',
-    GPS_ACCURACY_TOO_LOW: 'Akurasi GPS terlalu rendah.',
+    GPS_ACCURACY_TOO_LOW: 'Akurasi GPS belum cukup baik.',
     OUTSIDE_ATTENDANCE_TIME: 'Di luar jendela waktu absensi.',
     STUDENT_NOT_ASSIGNED_TO_COMPANY: 'Anda tidak memiliki penempatan PKL aktif.',
     COMPANY_LOCATION_NOT_CONFIGURED: 'Koordinat perusahaan belum dikonfigurasi admin.',
@@ -72,6 +74,7 @@ export const SmartGeoAttendance: React.FC<Props> = ({
     const [phase, setPhase] = useState<GeoAttendancePhase>('idle');
     const [mode, setMode] = useState<GeoMode>('check_in');
     const [location, setLocation] = useState<StudentLocation | null>(null);
+    const [progressState, setProgressState] = useState<GPSProgressState | null>(null);
     const [result, setResult] = useState<GeoAttendanceResult | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [clock, setClock] = useState<string>(initialTime);
@@ -86,7 +89,15 @@ export const SmartGeoAttendance: React.FC<Props> = ({
         return () => clearInterval(timer);
     }, []);
 
-    const busy = phase === 'getting_location' || phase === 'validating' || phase === 'submitting';
+    const busy =
+        phase === 'requesting_permission' ||
+        phase === 'searching' ||
+        phase === 'improving' ||
+        phase === 'stable' ||
+        phase === 'getting_location' ||
+        phase === 'validating' ||
+        phase === 'submitting';
+
     const alreadyAttended = Boolean(todayAttendance?.check_in);
     const alreadyCheckedOut = Boolean(todayAttendance?.check_out);
     const companyConfigured = Boolean(company?.latitude && company.longitude);
@@ -157,20 +168,32 @@ export const SmartGeoAttendance: React.FC<Props> = ({
         setResult(null);
         setErrorMessage(null);
         setLocation(null);
-        setPhase('getting_location');
+        setProgressState(null);
+        setPhase('requesting_permission');
 
         let loc: StudentLocation;
         try {
-            loc = await getCurrentLocation();
+            loc = await acquireStableLocation(
+                (progress) => {
+                    setPhase(progress.phase);
+                    setProgressState(progress);
+                    if (progress.sample) {
+                        setLocation(progress.sample);
+                    }
+                },
+                {
+                    maxAccuracy: config.maxGpsAccuracy || 30,
+                },
+            );
         } catch (error) {
-            setErrorMessage(error instanceof Error ? error.message : 'Gagal mendapatkan lokasi.');
+            setErrorMessage(error instanceof Error ? error.message : 'Gagal mendapatkan lokasi GPS.');
             setPhase('error');
             return;
         }
 
         setLocation(loc);
         setPhase('validating');
-        await delay(1400);
+        await delay(1000);
         setPhase('submitting');
 
         const submission = runMode === 'check_in'
@@ -206,14 +229,14 @@ export const SmartGeoAttendance: React.FC<Props> = ({
         return (
             <div className="rounded-2xl bg-slate-50 border border-slate-200 p-4 text-xs">
                 <p className="font-bold text-slate-700 mb-3 flex items-center gap-1.5">
-                    <SatelliteDish className="w-4 h-4 text-cyan-600" /> Status Sebelum Absen
+                    <SatelliteDish className="w-4 h-4 text-cyan-600" /> Status Lokasi Sebelum Absen
                 </p>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    <PreviewItem label="GPS" value={`±${Math.round(location.accuracy)} m`} tone={accTone} />
-                    <PreviewItem label="Jarak" value={formatDistance(previewDistance)} tone={previewLocationStatus === null ? 'warn' : locTone} />
-                    <PreviewItem label="Radius" value={`${radius} m`} tone="neutral" />
-                    <PreviewItem label="Lokasi" value={previewLocationStatus?.label ?? '—'} tone={previewLocationStatus === null ? 'warn' : locTone} />
-                    <PreviewItem label="Waktu" value={previewTimeStatus?.label ?? '—'} tone={previewTimeStatus === null ? 'warn' : timeTone} />
+                    <PreviewItem label="GPS Accuracy" value={`±${Math.round(location.accuracy)} m`} tone={accTone} />
+                    <PreviewItem label="Jarak Ke Tempat PKL" value={formatDistance(previewDistance)} tone={previewLocationStatus === null ? 'warn' : locTone} />
+                    <PreviewItem label="Radius Diizinkan" value={`${radius} m`} tone="neutral" />
+                    <PreviewItem label="Status Lokasi" value={previewLocationStatus?.label ?? '—'} tone={previewLocationStatus === null ? 'warn' : locTone} />
+                    <PreviewItem label="Estimasi Status" value={previewTimeStatus?.label ?? '—'} tone={previewTimeStatus === null ? 'warn' : timeTone} />
                     <div className="p-2 rounded-lg bg-white/80 border border-slate-100">
                         <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400">Jam Kerja</span>
                         <p className="mt-0.5 font-black text-slate-900">
@@ -261,17 +284,9 @@ export const SmartGeoAttendance: React.FC<Props> = ({
                         disabled={busy}
                         className="w-full px-6 py-5 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-extrabold text-sm shadow-lg shadow-amber-500/25 hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
                     >
-                        {phase === 'getting_location' ? (
+                        {busy ? (
                             <>
-                                <Loader2 className="w-5 h-5 animate-spin" /> Mendeteksi Lokasi...
-                            </>
-                        ) : phase === 'validating' ? (
-                            <>
-                                <LocateFixed className="w-5 h-5 animate-pulse" /> GPS Ditemukan — Memverifikasi...
-                            </>
-                        ) : phase === 'submitting' ? (
-                            <>
-                                <Loader2 className="w-5 h-5 animate-spin" /> Mengirim Check-out...
+                                <Loader2 className="w-5 h-5 animate-spin" /> {progressState?.message || 'Memproses lokasi...'}
                             </>
                         ) : (
                             <>
@@ -290,17 +305,9 @@ export const SmartGeoAttendance: React.FC<Props> = ({
                 disabled={busy || !companyConfigured}
                 className="w-full px-6 py-5 rounded-2xl bg-gradient-to-r from-cyan-500 to-teal-600 text-white font-extrabold text-sm shadow-lg shadow-cyan-500/25 hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 disabled:opacity-60 disabled:hover:scale-100 disabled:cursor-not-allowed"
             >
-                {phase === 'getting_location' ? (
+                {busy ? (
                     <>
-                        <Loader2 className="w-5 h-5 animate-spin" /> Mendeteksi Lokasi...
-                    </>
-                ) : phase === 'validating' ? (
-                    <>
-                        <LocateFixed className="w-5 h-5 animate-pulse" /> GPS Ditemukan — Memverifikasi...
-                    </>
-                ) : phase === 'submitting' ? (
-                    <>
-                        <Loader2 className="w-5 h-5 animate-spin" /> Mengirim Absensi...
+                        <Loader2 className="w-5 h-5 animate-spin" /> {progressState?.message || 'Memproses lokasi...'}
                     </>
                 ) : (
                     <>
@@ -337,7 +344,7 @@ export const SmartGeoAttendance: React.FC<Props> = ({
                         <div className="grid grid-cols-2 gap-3 text-xs">
                             <Detail label="Waktu Server" value={result.server_time} icon={Clock} />
                             <Detail label="Jarak ke Perusahaan" value={formatDistance(result.distance_from_company)} icon={MapPin} />
-                            <Detail label="GPS Accuracy" value={`${Math.round(result.gps_accuracy)} m`} icon={SatelliteDish} />
+                            <Detail label="GPS Accuracy" value={`±${Math.round(result.gps_accuracy)} m`} icon={SatelliteDish} />
                             <Detail label="Status" value="HADIR" icon={ShieldCheck} accent />
                         </div>
 
@@ -345,7 +352,7 @@ export const SmartGeoAttendance: React.FC<Props> = ({
                             <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
                                 <ShieldCheck className="w-4 h-4 text-emerald-600" /> Lokasi
                             </span>
-                            <span className="text-xs font-black text-emerald-700">✓ TERVERIFIKASI</span>
+                            <span className="text-xs font-black text-emerald-700">✓ TERVERIFIKASI STABIL</span>
                         </div>
                     </div>
                 );
@@ -367,7 +374,7 @@ export const SmartGeoAttendance: React.FC<Props> = ({
                     <div className="grid grid-cols-2 gap-3 text-xs">
                         <Detail label="Waktu Server" value={result.server_time} icon={Clock} />
                         <Detail label="Jarak ke Perusahaan" value={formatDistance(result.distance_from_company)} icon={MapPin} />
-                        <Detail label="GPS Accuracy" value={`${Math.round(result.gps_accuracy)} m`} icon={SatelliteDish} />
+                        <Detail label="GPS Accuracy" value={`±${Math.round(result.gps_accuracy)} m`} icon={SatelliteDish} />
                         <Detail label="Status" value={status} icon={ShieldCheck} accent />
                     </div>
 
@@ -375,7 +382,7 @@ export const SmartGeoAttendance: React.FC<Props> = ({
                         <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5">
                             <ShieldCheck className="w-4 h-4 text-emerald-600" /> Lokasi
                         </span>
-                        <span className="text-xs font-black text-emerald-700">✓ TERVERIFIKASI</span>
+                        <span className="text-xs font-black text-emerald-700">✓ TERVERIFIKASI STABIL</span>
                     </div>
                 </div>
             );
@@ -449,19 +456,55 @@ export const SmartGeoAttendance: React.FC<Props> = ({
                     </p>
                 )}
 
+                {/* Progress Indicators for GPS Watch & Stabilization */}
+                {phase === 'requesting_permission' && (
+                    <GeoStatusRow icon={<MapPin className="w-4 h-4 animate-pulse text-cyan-600" />} text={progressState?.message || "Meminta izin lokasi perangkat..."} />
+                )}
+                {phase === 'searching' && (
+                    <GeoStatusRow icon={<SatelliteDish className="w-4 h-4 animate-spin text-cyan-600" />} text={progressState?.message || "Mencari sinyal GPS..."} />
+                )}
+                {phase === 'improving' && (
+                    <GeoStatusRow
+                        icon={<LocateFixed className="w-4 h-4 animate-pulse text-amber-600" />}
+                        text={progressState?.message || `Meningkatkan akurasi lokasi (±${location ? Math.round(location.accuracy) : '-'} m)...`}
+                    />
+                )}
+                {phase === 'stable' && (
+                    <GeoStatusRow
+                        icon={<CheckCircle2 className="w-4 h-4 text-emerald-600" />}
+                        text={progressState?.message || `Lokasi stabil terkunci (±${location ? Math.round(location.accuracy) : '-'} m)`}
+                    />
+                )}
                 {phase === 'getting_location' && (
                     <GeoStatusRow icon={<MapPin className="w-4 h-4 animate-pulse text-cyan-600" />} text="Mendeteksi lokasi GPS..." />
                 )}
                 {phase === 'validating' && (
-                    <GeoStatusRow icon={<LocateFixed className="w-4 h-4 text-emerald-600" />} text={`GPS ditemukan (akurasi ±${location ? Math.round(location.accuracy) : '-'} m) — memverifikasi...`} />
+                    <GeoStatusRow icon={<LocateFixed className="w-4 h-4 text-emerald-600" />} text={`GPS terverifikasi (akurasi ±${location ? Math.round(location.accuracy) : '-'} m) — menyiapkan absensi...`} />
                 )}
                 {phase === 'submitting' && (
-                    <GeoStatusRow icon={<Loader2 className="w-4 h-4 animate-spin text-cyan-600" />} text="Menunggu validasi server..." />
+                    <GeoStatusRow icon={<Loader2 className="w-4 h-4 animate-spin text-cyan-600" />} text="Menunggu validasi akhir dari server Laravel..." />
                 )}
+
+                {/* Error Banner with Retry Button */}
                 {phase === 'error' && errorMessage && (
-                    <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-2">
-                        <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-                        <p className="text-xs font-semibold text-slate-700">{errorMessage}</p>
+                    <div className="p-5 rounded-2xl bg-rose-50 border border-rose-200 space-y-3">
+                        <div className="flex items-start gap-2.5">
+                            <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                            <div className="space-y-1">
+                                <p className="text-xs font-bold text-rose-900">Kendala GPS / Lokasi</p>
+                                <p className="text-xs font-medium text-rose-700">{errorMessage}</p>
+                            </div>
+                        </div>
+
+                        <div className="pt-2 flex items-center justify-end">
+                            <button
+                                type="button"
+                                onClick={() => handleRun(mode)}
+                                className="px-4 py-2 rounded-xl bg-rose-600 text-white font-bold text-xs hover:bg-rose-700 transition-colors flex items-center gap-1.5 shadow-sm"
+                            >
+                                <RotateCcw className="w-3.5 h-3.5" /> Ambil Lokasi Ulang
+                            </button>
+                        </div>
                     </div>
                 )}
 

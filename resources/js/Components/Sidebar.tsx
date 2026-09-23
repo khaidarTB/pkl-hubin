@@ -45,6 +45,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                         items: [
                             { label: 'Pengajuan PKL', href: '/admin/pengajuan', icon: FileText },
                             { label: 'Penempatan Siswa', href: '/admin/penempatan', icon: MapPin },
+                            { label: 'Perpanjangan PKL', href: '/perpanjangan', icon: Calendar },
                             { label: 'Perusahaan Mitra', href: '/admin/perusahaan', icon: Building2 },
                             { label: 'Kelola Guru', href: '/admin/guru', icon: Users },
                             { label: 'Kelola Siswa', href: '/admin/siswa', icon: GraduationCap },
@@ -91,6 +92,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                         title: 'BIMBINGAN & MONITORING',
                         items: [
                             { label: 'Siswa Bimbingan', href: '/monitoring', icon: Users },
+                            { label: 'Perpanjangan PKL', href: '/perpanjangan', icon: Calendar },
                             { label: 'Kunjungan Lapangan', href: '/kunjungan', icon: Calendar },
                             { label: 'Jurnal Siswa', href: '/jurnal', icon: BookOpen },
                             { label: 'Presensi Siswa', href: '/absensi', icon: CalendarCheck },
@@ -117,6 +119,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                         title: 'SUPERVISI SISWA',
                         items: [
                             { label: 'Daftar Siswa PKL', href: '/monitoring', icon: Users },
+                            { label: 'Perpanjangan PKL', href: '/perpanjangan', icon: Calendar },
                             { label: 'Approval E-Jurnal', href: '/jurnal', icon: CheckSquare },
                             { label: 'Penilaian Kinerja', href: '/penilaian', icon: Award },
                             { label: 'Dokumen Perusahaan', href: '/dokumen', icon: FileText },
@@ -132,6 +135,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 const programItems: NavItem[] = [
                     ...(isPklApproved ? [] : [{ label: 'Daftar PKL', href: '/pkl/pendaftaran', icon: FileText }]),
                     { label: 'Status Penempatan', href: '/pkl/status', icon: MapPin },
+                    { label: 'Perpanjangan PKL', href: '/perpanjangan', icon: Calendar },
                     { label: 'Presensi Harian', href: '/absensi', icon: CalendarCheck },
                     { label: 'E-Jurnal Kegiatan', href: '/jurnal', icon: BookOpen },
                     { label: 'Nilai & Evaluasi', href: '/penilaian', icon: Award },

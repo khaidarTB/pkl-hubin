@@ -89,4 +89,9 @@ class Placement extends Model
     {
         return $this->belongsTo(User::class, 'placed_by');
     }
+
+    public function extensions()
+    {
+        return $this->hasMany(PklExtension::class);
+    }
 }

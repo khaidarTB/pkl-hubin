@@ -38,11 +38,42 @@ export type GeoAttendanceAction = 'CHECK_IN' | 'CHECK_OUT' | null;
 
 export type GeoAttendancePhase =
     | 'idle'
+    | 'requesting_permission'
+    | 'searching'
+    | 'improving'
+    | 'stable'
     | 'getting_location'
     | 'validating'
     | 'submitting'
     | 'success'
     | 'error';
+
+export interface GPSAcquisitionConfig {
+    desiredAccuracy: number;       // Ideal target accuracy in meters (e.g. 15m)
+    maxAccuracy: number;           // Upper limit of acceptable accuracy in meters (e.g. 30m)
+    timeout: number;               // Maximum time to watch GPS in milliseconds (e.g. 15000ms)
+    requiredStableSamples: number; // Number of stable samples required (e.g. 3)
+    maxSamples: number;            // Maximum number of total samples before selecting best (e.g. 10)
+    maxPositionAge: number;        // Maximum age of position sample in milliseconds (e.g. 5000ms)
+    stabilityDistance: number;     // Maximum movement distance between samples in meters (e.g. 10m)
+}
+
+export interface LocationSample extends StudentLocation {
+    timestamp: number;
+    isStable?: boolean;
+    distanceFromPrevious?: number;
+}
+
+export interface GPSProgressState {
+    phase: GeoAttendancePhase;
+    currentAccuracy: number | null;
+    bestAccuracy: number | null;
+    stableSamplesCount: number;
+    requiredStableSamples: number;
+    totalSamplesCount: number;
+    message: string;
+    sample?: LocationSample;
+}
 
 export interface GeoValidationCompany {
     id: number;
