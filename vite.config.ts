@@ -18,20 +18,4 @@ export default defineConfig({
             '@': '/resources/js',
         },
     },
-
-    server: {
-        host: '0.0.0.0',
-        port: 5173,
-        // cors: true,
-        strictPort: true,
-        hmr: {
-            host: '434d6tr3-5173.asse.devtunnels.ms',
-            protocol: 'wss',
-            clientPort: 443
-        },
-
-        watch: {
-            ignored: ['**/storage/framework/views/**'],
-        },
-    },
 });
