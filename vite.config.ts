@@ -18,6 +18,7 @@ export default defineConfig({
             '@': '/resources/js',
         },
     },
+<<<<<<< HEAD
 
     server: {
         host: 'localhost',
@@ -33,4 +34,6 @@ export default defineConfig({
             ignored: ['**/storage/framework/views/**'],
         },
     },
+=======
+>>>>>>> refs/remotes/origin/main
 });
