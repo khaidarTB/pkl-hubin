@@ -20,14 +20,13 @@ export default defineConfig({
     },
 
     server: {
-        host: '0.0.0.0',
+        host: 'localhost',
         port: 5173,
         // cors: true,
         strictPort: true,
         hmr: {
-            host: '434d6tr3-5173.asse.devtunnels.ms',
-            protocol: 'wss',
-            clientPort: 443
+            host: 'localhost',
+            port: 5173,
         },
 
         watch: {
