@@ -18,19 +18,4 @@ export default defineConfig({
             '@': '/resources/js',
         },
     },
-
-    server: {
-        host: 'localhost',
-        port: 5173,
-        // cors: true,
-        strictPort: true,
-        hmr: {
-            host: 'localhost',
-            port: 5173,
-        },
-
-        watch: {
-            ignored: ['**/storage/framework/views/**'],
-        },
-    },
 });
