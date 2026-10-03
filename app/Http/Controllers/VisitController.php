@@ -27,16 +27,25 @@ class VisitController extends Controller
     {
         $user = $request->user();
 
-        $query = Visit::with(['teacher', 'student.user', 'company', 'placement.company', 'report', 'document.verification']);
+        $query = Visit::with([
+            'teacher:id,name',
+            'student:id,user_id,nis,class',
+            'student.user:id,name',
+            'company:id,name',
+            'placement.company:id,name',
+            'report',
+            'document.verification'
+        ]);
 
         if ($user->isGuru()) {
             $query->where('teacher_id', $user->id);
         }
 
-        $visits = $query->orderBy('visit_date', 'desc')->get();
+        $visits = $query->orderBy('visit_date', 'desc')->paginate(15)->withQueryString();
 
         // Students supervised by this teacher (for schedule form)
-        $myStudents = Student::with(['user', 'placement.company'])
+        $myStudents = Student::select('id', 'user_id', 'nis', 'class')
+            ->with(['user:id,name', 'placement.company:id,name'])
             ->whereHas('placement', function ($q) use ($user) {
                 if ($user->isGuru()) {
                     $q->where('school_supervisor_id', $user->id);
@@ -44,13 +53,14 @@ class VisitController extends Controller
             })->get();
 
         if ($myStudents->isEmpty()) {
-            $myStudents = Student::with(['user', 'placement.company'])
+            $myStudents = Student::select('id', 'user_id', 'nis', 'class')
+                ->with(['user:id,name', 'placement.company:id,name'])
                 ->whereHas('placement')
                 ->get();
         }
 
-        $companies = Company::all();
-        $teachers = User::whereIn('role', ['guru', 'admin'])->get();
+        $companies = Company::select('id', 'name')->get();
+        $teachers = User::select('id', 'name')->whereIn('role', ['guru', 'admin'])->get();
 
         return Inertia::render('Monitoring/VisitsIndex', [
             'visits' => $visits,

@@ -145,23 +145,37 @@ class PklApplicationController extends Controller
     }
 
     // Hubin/Admin: List all applications
-    public function adminIndex(): Response
+    public function adminIndex(Request $request): Response
     {
-        $applications = PklApplication::with(['student.user', 'company', 'reviewer'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $search = $request->input('search');
+
+        $query = PklApplication::with([
+            'student:id,user_id,nis,class,major',
+            'student.user:id,name',
+            'company:id,name',
+            'reviewer:id,name'
+        ])->orderBy('created_at', 'desc');
+
+        if ($search) {
+            $query->whereHas('student.user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            })->orWhere('company_name', 'like', "%{$search}%");
+        }
 
         $stats = [
-            'total' => $applications->count(),
-            'pending' => $applications->where('status', PklApplication::STATUS_SUBMITTED)->count(),
-            'revision' => $applications->where('status', PklApplication::STATUS_REVISION)->count(),
-            'approved' => $applications->where('status', PklApplication::STATUS_APPROVED)->count(),
-            'rejected' => $applications->where('status', PklApplication::STATUS_REJECTED)->count(),
+            'total' => PklApplication::count(),
+            'pending' => PklApplication::where('status', PklApplication::STATUS_SUBMITTED)->count(),
+            'revision' => PklApplication::where('status', PklApplication::STATUS_REVISION)->count(),
+            'approved' => PklApplication::where('status', PklApplication::STATUS_APPROVED)->count(),
+            'rejected' => PklApplication::where('status', PklApplication::STATUS_REJECTED)->count(),
         ];
+
+        $applications = $query->paginate(15)->withQueryString();
 
         return Inertia::render('Admin/Applications/Index', [
             'applications' => $applications,
             'stats' => $stats,
+            'filters' => ['search' => $search],
         ]);
     }
 

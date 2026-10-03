@@ -18,16 +18,13 @@ export default defineConfig({
             '@': '/resources/js',
         },
     },
-<<<<<<< HEAD
 
     server: {
         host: 'localhost',
         port: 5173,
-        // cors: true,
-        strictPort: true,
+        cors: true,
         hmr: {
             host: 'localhost',
-            port: 5173,
         },
 
         watch: {

@@ -63,11 +63,17 @@ class DocumentController extends Controller
     // List all generated documents & templates
     public function index(Request $request): Response
     {
-        $documents = Document::with(['template', 'visit.student.user', 'creator', 'verification'])
+        $documents = Document::with([
+            'template:id,name',
+            'visit.student.user:id,name',
+            'creator:id,name',
+            'verification'
+        ])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(15)
+            ->withQueryString();
 
-        // Self-heal: ensure all existing documents have verification records
+        // Self-heal: ensure all existing documents on current page have verification records
         foreach ($documents as $doc) {
             if (!$doc->verification) {
                 $this->ensureVerification($doc);
@@ -75,7 +81,7 @@ class DocumentController extends Controller
             }
         }
 
-        $templates = DocumentTemplate::with('uploader')->get();
+        $templates = DocumentTemplate::with('uploader:id,name')->get();
 
         return Inertia::render('Document/Index', [
             'documents' => $documents,

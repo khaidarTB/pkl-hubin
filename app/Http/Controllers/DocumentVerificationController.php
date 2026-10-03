@@ -128,9 +128,10 @@ class DocumentVerificationController extends Controller
             });
         }
 
-        $verifications = $query->orderBy('created_at', 'desc')->get()->map(
-            fn (DocumentVerification $v) => $this->presentAdminRow($v)
-        );
+        $verifications = $query->orderBy('created_at', 'desc')
+            ->paginate(15)
+            ->withQueryString()
+            ->through(fn (DocumentVerification $v) => $this->presentAdminRow($v));
 
         $stats = [
             'total' => DocumentVerification::count(),

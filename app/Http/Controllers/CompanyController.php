@@ -9,12 +9,23 @@ use Inertia\Response;
 
 class CompanyController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $companies = Company::withCount('placements')->orderBy('name')->get();
+        $search = $request->input('search');
+
+        $query = Company::withCount('placements')->orderBy('name');
+
+        if ($search) {
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('industry_type', 'like', "%{$search}%")
+                  ->orWhere('city', 'like', "%{$search}%");
+        }
+
+        $companies = $query->paginate(15)->withQueryString();
 
         return Inertia::render('Admin/Companies/Index', [
             'companies' => $companies,
+            'filters' => ['search' => $search],
         ]);
     }
 

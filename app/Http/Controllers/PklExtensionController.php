@@ -26,12 +26,14 @@ class PklExtensionController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
+        $student = null;
 
         $query = PklExtension::with([
-            'placement.company',
-            'student.user',
-            'requester',
-            'reviewer',
+            'placement.company:id,name',
+            'student:id,user_id,nis,class',
+            'student.user:id,name',
+            'requester:id,name',
+            'reviewer:id,name',
         ]);
 
         if ($user->isGuru()) {
@@ -60,14 +62,13 @@ class PklExtensionController extends Controller
             });
         }
 
-        $extensions = $query->orderBy('created_at', 'desc')->get();
+        $extensions = $query->orderBy('created_at', 'desc')->paginate(15)->withQueryString();
 
-        // Stats
+        // Stats using single aggregation SQL query or clones
         $statsQuery = PklExtension::query();
         if ($user->isGuru()) {
             $statsQuery->where('requested_by', $user->id);
         } elseif ($user->isSiswa()) {
-            $student = Student::where('user_id', $user->id)->first();
             if ($student) {
                 $statsQuery->where('student_id', $student->id);
             }
@@ -83,16 +84,19 @@ class PklExtensionController extends Controller
         // Placements available for extension request based on user role
         $myPlacements = collect();
         if ($user->isAdmin()) {
-            $myPlacements = Placement::with(['student.user', 'company', 'industry'])
+            $myPlacements = Placement::select('id', 'student_id', 'company_id', 'industry_id', 'status', 'start_date', 'end_date')
+                ->with(['student.user:id,name', 'company:id,name', 'industry:id,name'])
                 ->whereIn('status', ['Aktif', 'Belum Mulai', 'Terlambat'])
                 ->get();
         } elseif ($user->isGuru()) {
-            $myPlacements = Placement::with(['student.user', 'company', 'industry'])
+            $myPlacements = Placement::select('id', 'student_id', 'company_id', 'industry_id', 'status', 'start_date', 'end_date')
+                ->with(['student.user:id,name', 'company:id,name', 'industry:id,name'])
                 ->where('school_supervisor_id', $user->id)
                 ->whereIn('status', ['Aktif', 'Belum Mulai', 'Terlambat'])
                 ->get();
         } elseif ($user->isIndustri()) {
-            $myPlacements = Placement::with(['student.user', 'company', 'industry'])
+            $myPlacements = Placement::select('id', 'student_id', 'company_id', 'industry_id', 'status', 'start_date', 'end_date')
+                ->with(['student.user:id,name', 'company:id,name', 'industry:id,name'])
                 ->where('industry_supervisor_id', $user->id)
                 ->whereIn('status', ['Aktif', 'Belum Mulai', 'Terlambat'])
                 ->get();

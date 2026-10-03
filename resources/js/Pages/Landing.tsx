@@ -124,30 +124,30 @@ export default function Landing({ stats, partnerships = [], documentations = [] 
             <Head title="Hubin SMK Taruna Bangsa — PKLConnect Emerald Edition" />
 
             {/* HERO SECTION WITH PHOTO SLIDER */}
-            <section className="relative overflow-hidden pt-8 pb-20 bg-slate-950 text-white">
-                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[750px] bg-gradient-to-tr from-emerald-600/20 via-teal-600/15 to-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+            <section className="relative overflow-x-clip overflow-y-hidden pt-6 sm:pt-8 pb-16 sm:pb-20 bg-slate-950 text-white">
+                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[750px] h-[350px] sm:h-[750px] bg-gradient-to-tr from-emerald-600/20 via-teal-600/15 to-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
 
-                <div className="w-full px-4 sm:px-8 lg:px-12 relative z-10">
-                    <div className="text-center max-w-4xl mx-auto mb-10">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] font-bold mb-6">
-                            <Building2 className="w-4 h-4 text-emerald-400" />
+                <div className="w-full max-w-7xl mx-auto px-3 sm:px-8 lg:px-12 relative z-10">
+                    <div className="text-center max-w-4xl mx-auto mb-8 sm:mb-10">
+                        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[10px] sm:text-[11px] font-bold mb-4 sm:mb-6">
+                            <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
                             <span>HUBIN SMK TARUNA BANGSA</span>
                         </div>
 
-                        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
+                        <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
                             Hubungkan Siswa, Sekolah, dan Industri  <br />
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-300">
                                 dalam Satu Platform
                             </span>
                         </h1>
 
-                        <p className="mt-4 text-slate-300 text-sm sm:text-lg leading-relaxed max-w-3xl mx-auto">
+                        <p className="mt-3 sm:mt-4 text-slate-300 text-xs sm:text-lg leading-relaxed max-w-3xl mx-auto">
                             Menghubungkan <strong className="text-emerald-300">Siswa SMK Taruna Bangsa</strong>, <strong className="text-emerald-300">Guru Pembimbing</strong>, dan <strong className="text-emerald-300">50+ Perusahaan Mitra Nasional</strong> dalam satu ekosistem digital real-time terintegrasi.
                         </p>
                     </div>
 
-                    <div id="galeri" className="relative max-w-6xl mx-auto rounded-3xl overflow-hidden border border-slate-800 shadow-2xl bg-slate-900 group">
-                        <div className="relative h-[360px] sm:h-[500px] w-full overflow-hidden">
+                    <div id="galeri" className="relative max-w-6xl mx-auto rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-800 shadow-2xl bg-slate-900 group">
+                        <div className="relative h-[260px] sm:h-[500px] w-full overflow-hidden">
                             {gallerySlides.map((slide, idx) => (
                                 <div
                                     key={slide.id}
@@ -161,14 +161,14 @@ export default function Landing({ stats, partnerships = [], documentations = [] 
                                         className="w-full h-full object-cover object-center"
                                     />
                                     {/* Overlay Gradient Emerald */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent flex flex-col justify-end p-6 sm:p-10">
-                                        <span className="inline-block self-start px-3.5 py-1.5 bg-slate-900 text-white font-bold text-[11px] uppercase tracking-wider rounded-full mb-3 border border-slate-700">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent flex flex-col justify-end p-4 sm:p-10">
+                                        <span className="inline-block self-start px-2.5 py-1 sm:px-3.5 sm:py-1.5 bg-slate-900 text-white font-bold text-[9px] sm:text-[11px] uppercase tracking-wider rounded-full mb-2 sm:mb-3 border border-slate-700">
                                             {slide.badge}
                                         </span>
-                                        <h3 className="text-xl sm:text-3xl font-black text-white leading-snug">
+                                        <h3 className="text-sm sm:text-3xl font-black text-white leading-snug">
                                             {slide.title}
                                         </h3>
-                                        <p className="text-xs sm:text-base text-slate-300 mt-1 font-medium max-w-2xl">
+                                        <p className="text-[11px] sm:text-base text-slate-300 mt-1 font-medium max-w-2xl line-clamp-2 sm:line-clamp-none">
                                             {slide.subtitle}
                                         </p>
                                     </div>
@@ -179,26 +179,26 @@ export default function Landing({ stats, partnerships = [], documentations = [] 
                         {/* Slider Nav Buttons */}
                         <button
                             onClick={prevSlide}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-2xl bg-slate-950/80 border border-slate-700/60 text-white flex items-center justify-center hover:bg-white hover:text-slate-950 transition-all"
+                            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-950/80 border border-slate-700/60 text-white flex items-center justify-center hover:bg-white hover:text-slate-950 transition-all"
                         >
-                            <ChevronLeft className="w-6 h-6" />
+                            <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
                         </button>
 
                         <button
                             onClick={nextSlide}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-12 h-12 rounded-2xl bg-slate-950/80 border border-slate-700/60 text-white flex items-center justify-center hover:bg-white hover:text-slate-950 transition-all"
+                            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-950/80 border border-slate-700/60 text-white flex items-center justify-center hover:bg-white hover:text-slate-950 transition-all"
                         >
-                            <ChevronRight className="w-6 h-6" />
+                            <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
                         </button>
 
                         {/* Slider Indicators Dots */}
-                        <div className="absolute bottom-4 right-6 z-20 flex items-center gap-2 bg-slate-950/80 px-3 py-1.5 rounded-full border border-slate-700/60 backdrop-blur-sm">
+                        <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-6 z-20 flex items-center gap-1.5 sm:gap-2 bg-slate-950/80 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full border border-slate-700/60 backdrop-blur-sm">
                             {gallerySlides.map((_, idx) => (
                                 <button
                                     key={idx}
                                     onClick={() => setCurrentSlide(idx)}
-                                    className={`h-2 rounded-full transition-all ${
-                                        idx === currentSlide ? 'w-6 bg-white' : 'w-2 bg-slate-500 hover:bg-slate-400'
+                                    className={`h-1.5 sm:h-2 rounded-full transition-all ${
+                                        idx === currentSlide ? 'w-4 sm:w-6 bg-white' : 'w-1.5 sm:w-2 bg-slate-500 hover:bg-slate-400'
                                     }`}
                                 />
                             ))}

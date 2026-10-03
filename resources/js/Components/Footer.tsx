@@ -55,20 +55,16 @@ export const Footer: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+                <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4 text-center sm:text-left">
                     <p>© 2026 Hubin SMK Taruna Bangsa — PKLConnect System. All rights reserved.</p>
-                    <p className="flex items-center gap-1">
-                        Didukung oleh : 
-                    <div className="container-supporters-logo">
-                        {
-                        supportersLogo.map((supporterLogo, i) => {
-                            return (
-                                <img key={i} className='w-15 h-auto' src={supporterLogo} alt="" />
-                            )
-                        })
-                    }
+                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
+                        <span className="shrink-0 text-slate-400 font-medium">Didukung oleh :</span>
+                        <div className="container-supporters-logo flex flex-wrap items-center justify-center gap-3">
+                            {supportersLogo.map((supporterLogo, i) => (
+                                <img key={i} className="h-6 sm:h-7 w-auto object-contain brightness-90 hover:brightness-100 transition-all" src={supporterLogo} alt="supporter logo" />
+                            ))}
+                        </div>
                     </div>
-                    </p>
                 </div>
             </div>
         </footer>
