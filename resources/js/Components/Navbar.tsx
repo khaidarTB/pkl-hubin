@@ -3,7 +3,11 @@ import { Link, usePage } from '@inertiajs/react';
 import { Sparkles, ArrowRight, Menu, X } from 'lucide-react';
 import { PageProps } from '@/Types';
 
-export const Navbar: React.FC = () => {
+interface NavbarProps {
+    showNexa?: boolean;
+}
+
+export const Navbar: React.FC<NavbarProps> = ({ showNexa = true }) => {
     const { props } = usePage<PageProps>();
     const auth = props?.auth;
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -57,12 +61,14 @@ export const Navbar: React.FC = () => {
                     >
                         Program Keahlian
                     </a>
-                    <a 
-                        href="#nexa" 
-                        className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-extrabold hover:bg-emerald-100 hover:scale-105 transition-all shadow-xs"
-                    >
-                        <Sparkles className="w-4 h-4 text-emerald-600" /> NEXA AI
-                    </a>
+                    {showNexa && (
+                        <a 
+                            href="#nexa" 
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-extrabold hover:bg-emerald-100 hover:scale-105 transition-all shadow-xs"
+                        >
+                            <Sparkles className="w-4 h-4 text-emerald-600" /> NEXA AI
+                        </a>
+                    )}
                 </nav>
 
                 {/* Action CTA & Mobile Menu Button */}

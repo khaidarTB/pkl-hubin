@@ -120,7 +120,7 @@ export default function Landing({ stats, partnerships = [], documentations = [] 
     ];
 
     return (
-        <GuestLayout>
+        <GuestLayout showNexa={false}>
             <Head title="Hubin SMK Taruna Bangsa — PKLConnect Emerald Edition" />
 
             {/* HERO SECTION WITH PHOTO SLIDER */}
