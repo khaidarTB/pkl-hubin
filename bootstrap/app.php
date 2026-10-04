@@ -5,6 +5,8 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RoleMiddleware;
+use App\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken as FrameworkValidateCsrfToken;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,6 +25,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => RoleMiddleware::class,
         ]);
+
+        // Keeps the XSRF-TOKEN cookie in sync after a 419 so the SPA recovers
+        // without a hard reload.
+        $middleware->replaceInGroup(
+            'web',
+            FrameworkValidateCsrfToken::class,
+            ValidateCsrfToken::class,
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
