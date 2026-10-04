@@ -51,6 +51,8 @@ return [
         'model' => env('AI_MODEL', 'gemini-3-flash-preview'),
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),
         'timeout' => (int) env('GEMINI_TIMEOUT', 15),
+        // Maksimum request AI per menit per user (rate limiter "ai").
+        'rate_limit' => (int) env('AI_RATE_LIMIT', 15),
         // Fallback sengaja dinonaktifkan: Nexa AI hanya menggunakan satu model.
         'fallback_models' => array_filter(array_map('trim', explode(',', (string) env(
             'GEMINI_FALLBACK_MODELS',

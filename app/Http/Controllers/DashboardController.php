@@ -15,7 +15,6 @@ use App\Models\PklApplication;
 use App\Models\Visit;
 use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -88,6 +87,20 @@ class DashboardController extends Controller
         // ── Monitoring Student Table — FIXED N+1 ────────────────────
         // Use withCount to batch-load attendance/journal counts instead
         // of running separate queries per student inside map().
+        $attCounts = Attendance::query()
+            ->select('student_id')
+            ->selectRaw("COUNT(*) as total")
+            ->selectRaw("SUM(CASE WHEN status = 'Hadir' THEN 1 ELSE 0 END) as hadir")
+            ->groupBy('student_id')
+            ->get()
+            ->keyBy('student_id');
+
+        $journalCounts = Journal::query()
+            ->select('student_id')
+            ->selectRaw("COUNT(*) as total")
+            ->groupBy('student_id')
+            ->pluck('total', 'student_id');
+
         $placements = Placement::with([
                 'student.user:id,name,email',
                 'company:id,name',
@@ -100,34 +113,12 @@ class DashboardController extends Controller
                       ->where('attendances.status', 'Hadir');
                 },
             ])
-            ->paginate(50)
-            ->through(function ($p) {
-                // Batch-loaded via subquery — no N+1
-                $studentId = $p->student_id;
-                static $attCounts = null;
-                static $journalCounts = null;
-
-                // Lazy-init batch lookups on first call
-                if ($attCounts === null) {
-                    $attCounts = Attendance::query()
-                        ->select('student_id')
-                        ->selectRaw("COUNT(*) as total")
-                        ->selectRaw("SUM(CASE WHEN status = 'Hadir' THEN 1 ELSE 0 END) as hadir")
-                        ->groupBy('student_id')
-                        ->pluck(DB::raw("JSON_OBJECT('total', total, 'hadir', hadir)"), 'student_id')
-                        ->map(fn ($v) => json_decode($v, true));
-
-                    $journalCounts = Journal::query()
-                        ->select('student_id')
-                        ->selectRaw("COUNT(*) as total")
-                        ->groupBy('student_id')
-                        ->pluck('total', 'student_id');
-                }
-
-                $att = $attCounts[$studentId] ?? ['total' => 0, 'hadir' => 0];
-                $totalDays = max(1, $att['total']);
-                $attendancePercent = round(($att['hadir'] / $totalDays) * 100);
-                $journalCount = $journalCounts[$studentId] ?? 0;
+            ->get()
+            ->map(function ($p) use ($attCounts, $journalCounts) {
+                $att = $attCounts->get($p->student_id);
+                $totalDays = max(1, $att->total ?? 0);
+                $attendancePercent = round((($att->hadir ?? 0) / $totalDays) * 100);
+                $journalCount = $journalCounts[$p->student_id] ?? 0;
 
                 $statusBadge = 'Aman';
                 if ($p->status === 'Bermasalah' || $attendancePercent < 80) {
