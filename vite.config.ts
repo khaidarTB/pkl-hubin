@@ -17,20 +17,5 @@ export default defineConfig({
         alias: {
             '@': '/resources/js',
         },
-    },
-
-    server: {
-        host: 'localhost',
-        port: 5173,
-        cors: true,
-        hmr: {
-            host: 'localhost',
-        },
-
-        watch: {
-            ignored: ['**/storage/framework/views/**'],
-        },
-    },
-=======
->>>>>>> refs/remotes/origin/main
+    }
 });
