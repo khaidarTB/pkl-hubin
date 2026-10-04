@@ -15,54 +15,87 @@ class MonitoringController extends Controller
 {
     public function index(Request $request): Response
     {
-        $placements = Placement::with(['student.user', 'company', 'industry', 'schoolSupervisor', 'industrySupervisor'])
-            ->get()
-            ->map(function ($p) {
-                $attCount = Attendance::where('student_id', $p->student_id)->where('status', 'Hadir')->count();
-                $totalDays = max(1, Attendance::where('student_id', $p->student_id)->count());
-                $attPercent = round(($attCount / $totalDays) * 100);
+        $search = $request->input('search');
 
-                $journalCount = Journal::where('student_id', $p->student_id)->count();
+        $query = Placement::query()
+            ->with([
+                'student:id,user_id,nis,class,major',
+                'student.user:id,name',
+                'company:id,name',
+                'industry:id,name',
+                'schoolSupervisor:id,name',
+                'industrySupervisor:id,name',
+            ])
+            ->addSelect([
+                'attendance_hadir_count' => Attendance::selectRaw('count(*)')
+                    ->whereColumn('student_id', 'placements.student_id')
+                    ->where('status', 'Hadir'),
+                'attendance_total_count' => Attendance::selectRaw('count(*)')
+                    ->whereColumn('student_id', 'placements.student_id'),
+                'journal_count' => Journal::selectRaw('count(*)')
+                    ->whereColumn('student_id', 'placements.student_id'),
+            ]);
 
-                $statusBadge = 'Aman';
-                if ($p->status === 'Bermasalah' || $attPercent < 80) {
-                    $statusBadge = 'Bermasalah';
-                } elseif ($journalCount < 3 || $attPercent < 90) {
-                    $statusBadge = 'Perlu Perhatian';
-                }
-
-                return [
-                    'id' => $p->student->id ?? 0,
-                    'nis' => $p->student->nis ?? '-',
-                    'name' => $p->student->user->name ?? 'Siswa',
-                    'class' => $p->student->class ?? '-',
-                    'major' => $p->student->major ?? '-',
-                    'industry_name' => $p->company->name ?? ($p->industry->name ?? 'Perusahaan Mitra'),
-                    'school_supervisor' => $p->schoolSupervisor->name ?? 'Belum Diatur',
-                    'industry_supervisor' => $p->industrySupervisor->name ?? 'Belum Diatur',
-                    'attendance_percent' => $attPercent,
-                    'journal_filled' => $journalCount,
-                    'status' => $statusBadge,
-                    'placement_status' => $p->status,
-                ];
+        if ($search) {
+            $query->whereHas('student.user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            })->orWhereHas('student', function ($q) use ($search) {
+                $q->where('nis', 'like', "%{$search}%")
+                  ->orWhere('class', 'like', "%{$search}%");
             });
+        }
+
+        $placements = $query->paginate(15)->withQueryString()->through(function ($p) {
+            $attCount = (int) ($p->attendance_hadir_count ?? 0);
+            $totalDays = max(1, (int) ($p->attendance_total_count ?? 0));
+            $attPercent = round(($attCount / $totalDays) * 100);
+            $journalCount = (int) ($p->journal_count ?? 0);
+
+            $statusBadge = 'Aman';
+            if ($p->status === 'Bermasalah' || $attPercent < 80) {
+                $statusBadge = 'Bermasalah';
+            } elseif ($journalCount < 3 || $attPercent < 90) {
+                $statusBadge = 'Perlu Perhatian';
+            }
+
+            return [
+                'id' => $p->student->id ?? 0,
+                'nis' => $p->student->nis ?? '-',
+                'name' => $p->student->user->name ?? 'Siswa',
+                'class' => $p->student->class ?? '-',
+                'major' => $p->student->major ?? '-',
+                'industry_name' => $p->company->name ?? ($p->industry->name ?? 'Perusahaan Mitra'),
+                'school_supervisor' => $p->schoolSupervisor->name ?? 'Belum Diatur',
+                'industry_supervisor' => $p->industrySupervisor->name ?? 'Belum Diatur',
+                'attendance_percent' => $attPercent,
+                'journal_filled' => $journalCount,
+                'status' => $statusBadge,
+                'placement_status' => $p->status,
+            ];
+        });
 
         return Inertia::render('Monitoring/Index', [
             'students' => $placements,
+            'filters' => ['search' => $search],
         ]);
     }
 
     public function show($id): Response
     {
-        $student = Student::with(['user', 'placement.company', 'placement.industry', 'placement.schoolSupervisor', 'placement.industrySupervisor'])
-            ->findOrFail($id);
+        $student = Student::with([
+            'user:id,name,email',
+            'placement.company:id,name,address',
+            'placement.industry:id,name,address',
+            'placement.schoolSupervisor:id,name',
+            'placement.industrySupervisor:id,name'
+        ])->findOrFail($id);
 
-        $attendances = Attendance::where('student_id', $student->id)->orderBy('date', 'desc')->get();
-        $journals = Journal::where('student_id', $student->id)->orderBy('date', 'desc')->get();
+        $attendances = Attendance::where('student_id', $student->id)->orderBy('date', 'desc')->paginate(20)->withQueryString();
+        $journals = Journal::where('student_id', $student->id)->orderBy('date', 'desc')->paginate(15)->withQueryString();
         $assessment = Assessment::where('student_id', $student->id)->first();
 
-        $attCount = $attendances->where('status', 'Hadir')->count();
-        $totalDays = max(1, $attendances->count());
+        $attCount = Attendance::where('student_id', $student->id)->where('status', 'Hadir')->count();
+        $totalDays = max(1, Attendance::where('student_id', $student->id)->count());
         $attPercent = round(($attCount / $totalDays) * 100);
 
         return Inertia::render('Monitoring/Detail', [
@@ -84,8 +117,8 @@ class MonitoringController extends Controller
             ],
             'stats' => [
                 'attendance_percent' => $attPercent,
-                'total_journals' => $journals->count(),
-                'approved_journals' => $journals->where('status', 'Approved')->count(),
+                'total_journals' => Journal::where('student_id', $student->id)->count(),
+                'approved_journals' => Journal::where('student_id', $student->id)->where('status', 'Approved')->count(),
                 'temp_score' => $assessment ? $assessment->total_score : 91.5,
             ],
             'attendances' => $attendances,

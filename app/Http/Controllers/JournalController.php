@@ -18,9 +18,10 @@ class JournalController extends Controller
 
         if ($user->isSiswa()) {
             $student = Student::where('user_id', $user->id)->first();
-            $journals = Journal::where('student_id', $student->id)
+            $journals = Journal::where('student_id', $student->id ?? 0)
                 ->orderBy('date', 'desc')
-                ->get();
+                ->paginate(15)
+                ->withQueryString();
 
             return Inertia::render('Journal/Index', [
                 'journals' => $journals,
@@ -38,15 +39,22 @@ class JournalController extends Controller
                 ? 'industry_signature'
                 : 'school_signature';
 
-            $journals = Journal::with(['student.user', 'student.placement.industry', 'approver'])
+            $journals = Journal::with([
+                'student:id,user_id,nis,class,major',
+                'student.user:id,name',
+                'student.placement:id,student_id,company_id,industry_id,'.$signatureColumn,
+                'student.placement.industry:id,name',
+                'approver:id,name'
+            ])
                 ->whereHas('student.placement', fn ($q) => $q->where($supervisorColumn, $user->id))
                 ->orderBy('date', 'desc')
-                ->get();
+                ->paginate(15)
+                ->withQueryString();
 
-            // Tandai apakah tanda tangan approver sudah tersimpan di penempatan,
-            // sehingga approval berikutnya tidak perlu upload ulang (TTD sekali saja).
-            $journals->each(function ($journal) use ($signatureColumn) {
+            // Tandai apakah tanda tangan approver sudah tersimpan di penempatan
+            $journals->through(function ($journal) use ($signatureColumn) {
                 $journal->signature_ready = ! empty($journal->student?->placement?->{$signatureColumn});
+                return $journal;
             });
 
             return Inertia::render('Journal/Approval', [
@@ -55,9 +63,16 @@ class JournalController extends Controller
         }
 
         // Admin
-        $journals = Journal::with(['student.user', 'student.placement.industry', 'approver'])
+        $journals = Journal::with([
+            'student:id,user_id,nis,class,major',
+            'student.user:id,name',
+            'student.placement:id,student_id,company_id,industry_id',
+            'student.placement.industry:id,name',
+            'approver:id,name'
+        ])
             ->orderBy('date', 'desc')
-            ->get();
+            ->paginate(20)
+            ->withQueryString();
 
         return Inertia::render('Journal/AdminIndex', [
             'journals' => $journals,

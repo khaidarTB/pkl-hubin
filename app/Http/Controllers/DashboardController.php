@@ -15,6 +15,7 @@ use App\Models\PklApplication;
 use App\Models\Visit;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -35,15 +36,26 @@ class DashboardController extends Controller
 
     private function adminDashboard(): Response
     {
+        // ── Stat cards: single count queries (cheap, indexed) ────────
         $totalStudents = Student::count();
         $pendingApplications = PklApplication::where('status', PklApplication::STATUS_SUBMITTED)->count();
-        
-        $approvedApplications = PklApplication::where('status', PklApplication::STATUS_APPROVED)->pluck('student_id');
-        $unplacedStudents = Student::whereIn('id', $approvedApplications)->whereDoesntHave('placement')->count();
 
-        $activeStudents = Placement::where('status', 'Aktif')->count();
-        $troubleStudents = Placement::where('status', 'Bermasalah')->count();
-        $completedStudents = Placement::where('status', 'Selesai')->count();
+        $unplacedStudents = Student::whereHas('latestApplication', fn ($q) => $q->where('status', PklApplication::STATUS_APPROVED))
+            ->whereDoesntHave('placement')
+            ->count();
+
+        // Use a single query for placement status counts
+        $placementCounts = Placement::query()
+            ->selectRaw("
+                SUM(CASE WHEN status = 'Aktif' THEN 1 ELSE 0 END) as active,
+                SUM(CASE WHEN status = 'Bermasalah' THEN 1 ELSE 0 END) as trouble,
+                SUM(CASE WHEN status = 'Selesai' THEN 1 ELSE 0 END) as completed
+            ")
+            ->first();
+
+        $activeStudents = (int) ($placementCounts->active ?? 0);
+        $troubleStudents = (int) ($placementCounts->trouble ?? 0);
+        $completedStudents = (int) ($placementCounts->completed ?? 0);
 
         // Chart Data
         $attendanceTrends = [
@@ -69,45 +81,81 @@ class DashboardController extends Controller
 
         $industryDistribution = Company::withCount(['placements' => function ($q) {
             $q->where('status', 'Aktif');
-        }])->get()->map(function ($c) {
+        }])->get(['id', 'name'])->map(function ($c) {
             return ['name' => $c->name, 'students' => $c->placements_count];
         });
 
-        // Monitoring Student Table
-        $placements = Placement::with(['student.user', 'company', 'industry', 'schoolSupervisor'])->get()->map(function ($p) {
-            $attCount = Attendance::where('student_id', $p->student_id)->where('status', 'Hadir')->count();
-            $totalDays = max(1, Attendance::where('student_id', $p->student_id)->count());
-            $attendancePercent = round(($attCount / $totalDays) * 100);
-            
-            $journalCount = Journal::where('student_id', $p->student_id)->count();
+        // ── Monitoring Student Table — FIXED N+1 ────────────────────
+        // Use withCount to batch-load attendance/journal counts instead
+        // of running separate queries per student inside map().
+        $placements = Placement::with([
+                'student.user:id,name,email',
+                'company:id,name',
+                'industry:id,name',
+                'schoolSupervisor:id,name',
+            ])
+            ->withCount([
+                'student as att_hadir_count' => function ($q) {
+                    $q->join('attendances', 'students.id', '=', 'attendances.student_id')
+                      ->where('attendances.status', 'Hadir');
+                },
+            ])
+            ->paginate(50)
+            ->through(function ($p) {
+                // Batch-loaded via subquery — no N+1
+                $studentId = $p->student_id;
+                static $attCounts = null;
+                static $journalCounts = null;
 
-            $statusBadge = 'Aman';
-            if ($p->status === 'Bermasalah' || $attendancePercent < 80) {
-                $statusBadge = 'Bermasalah';
-            } elseif ($journalCount < 3 || $attendancePercent < 90) {
-                $statusBadge = 'Perlu Perhatian';
-            }
+                // Lazy-init batch lookups on first call
+                if ($attCounts === null) {
+                    $attCounts = Attendance::query()
+                        ->select('student_id')
+                        ->selectRaw("COUNT(*) as total")
+                        ->selectRaw("SUM(CASE WHEN status = 'Hadir' THEN 1 ELSE 0 END) as hadir")
+                        ->groupBy('student_id')
+                        ->pluck(DB::raw("JSON_OBJECT('total', total, 'hadir', hadir)"), 'student_id')
+                        ->map(fn ($v) => json_decode($v, true));
 
-            return [
-                'id' => $p->student->id,
-                'placement_id' => $p->id,
-                'name' => $p->student->user->name ?? 'Siswa',
-                'email' => $p->student->user->email ?? '-',
-                'nis' => $p->student->nis ?? '-',
-                'class' => $p->student->class ?? '-',
-                'major' => $p->student->major ?? '-',
-                'phone' => $p->student->phone ?? '-',
-                'industry' => $p->company->name ?? ($p->industry->name ?? 'Perusahaan Mitra'),
-                'attendance_percent' => $attendancePercent,
-                'journal_count' => "{$journalCount} / 25",
-                'status' => $statusBadge,
-                'placement_status' => $p->status,
-                'school_supervisor_id' => $p->school_supervisor_id,
-                'school_supervisor' => $p->schoolSupervisor->name ?? 'Belum Ditugaskan',
-                'start_date' => $p->start_date ? Carbon::parse($p->start_date)->format('Y-m-d') : '-',
-                'end_date' => $p->end_date ? Carbon::parse($p->end_date)->format('Y-m-d') : '-',
-            ];
-        });
+                    $journalCounts = Journal::query()
+                        ->select('student_id')
+                        ->selectRaw("COUNT(*) as total")
+                        ->groupBy('student_id')
+                        ->pluck('total', 'student_id');
+                }
+
+                $att = $attCounts[$studentId] ?? ['total' => 0, 'hadir' => 0];
+                $totalDays = max(1, $att['total']);
+                $attendancePercent = round(($att['hadir'] / $totalDays) * 100);
+                $journalCount = $journalCounts[$studentId] ?? 0;
+
+                $statusBadge = 'Aman';
+                if ($p->status === 'Bermasalah' || $attendancePercent < 80) {
+                    $statusBadge = 'Bermasalah';
+                } elseif ($journalCount < 3 || $attendancePercent < 90) {
+                    $statusBadge = 'Perlu Perhatian';
+                }
+
+                return [
+                    'id' => $p->student->id,
+                    'placement_id' => $p->id,
+                    'name' => $p->student->user->name ?? 'Siswa',
+                    'email' => $p->student->user->email ?? '-',
+                    'nis' => $p->student->nis ?? '-',
+                    'class' => $p->student->class ?? '-',
+                    'major' => $p->student->major ?? '-',
+                    'phone' => $p->student->phone ?? '-',
+                    'industry' => $p->company->name ?? ($p->industry->name ?? 'Perusahaan Mitra'),
+                    'attendance_percent' => $attendancePercent,
+                    'journal_count' => "{$journalCount} / 25",
+                    'status' => $statusBadge,
+                    'placement_status' => $p->status,
+                    'school_supervisor_id' => $p->school_supervisor_id,
+                    'school_supervisor' => $p->schoolSupervisor->name ?? 'Belum Ditugaskan',
+                    'start_date' => $p->start_date ? Carbon::parse($p->start_date)->format('Y-m-d') : '-',
+                    'end_date' => $p->end_date ? Carbon::parse($p->end_date)->format('Y-m-d') : '-',
+                ];
+            });
 
         // Early Warning Metrics (Mid-Period Monitoring Alert)
         $earlyWarning = [
@@ -143,15 +191,35 @@ class DashboardController extends Controller
 
     private function guruDashboard($user): Response
     {
-        $placements = Placement::with(['student.user', 'company', 'industry'])
+        $placements = Placement::with(['student.user:id,name,email', 'company:id,name', 'industry:id,name'])
             ->where('school_supervisor_id', $user->id)
             ->get();
 
-        $studentList = $placements->map(function ($p) {
-            $attCount = Attendance::where('student_id', $p->student_id)->where('status', 'Hadir')->count();
-            $totalDays = max(1, Attendance::where('student_id', $p->student_id)->count());
+        // Batch-load attendance/journal counts — FIXES N+1
+        $studentIds = $placements->pluck('student_id')->unique()->values();
+
+        $attData = Attendance::query()
+            ->whereIn('student_id', $studentIds)
+            ->select('student_id')
+            ->selectRaw("COUNT(*) as total")
+            ->selectRaw("SUM(CASE WHEN status = 'Hadir' THEN 1 ELSE 0 END) as hadir")
+            ->groupBy('student_id')
+            ->get()
+            ->keyBy('student_id');
+
+        $journalData = Journal::query()
+            ->whereIn('student_id', $studentIds)
+            ->select('student_id')
+            ->selectRaw("COUNT(*) as total")
+            ->groupBy('student_id')
+            ->pluck('total', 'student_id');
+
+        $studentList = $placements->map(function ($p) use ($attData, $journalData) {
+            $att = $attData[$p->student_id] ?? null;
+            $totalDays = max(1, $att->total ?? 0);
+            $attCount = $att->hadir ?? 0;
             $attendancePercent = round(($attCount / $totalDays) * 100);
-            $journalCount = Journal::where('student_id', $p->student_id)->count();
+            $journalCount = $journalData[$p->student_id] ?? 0;
 
             return [
                 'id' => $p->student->id,
@@ -172,7 +240,7 @@ class DashboardController extends Controller
             ];
         });
 
-        $visits = Visit::with(['student.user', 'company'])
+        $visits = Visit::with(['student.user:id,name', 'company:id,name'])
             ->where('teacher_id', $user->id)
             ->orderBy('visit_date', 'desc')
             ->get();
@@ -191,12 +259,23 @@ class DashboardController extends Controller
 
     private function industriDashboard($user): Response
     {
-        $placements = Placement::with(['student.user', 'student.journals', 'student.assessment'])
+        $placements = Placement::with(['student.user:id,name,email', 'student.assessment'])
             ->where('industry_supervisor_id', $user->id)
             ->get();
 
-        $students = $placements->map(function ($p) {
-            $jPending = Journal::where('student_id', $p->student_id)->where('status', 'Menunggu Approval')->count();
+        // Batch-load pending journal counts — FIXES N+1
+        $studentIds = $placements->pluck('student_id')->unique()->values();
+
+        $pendingJournals = Journal::query()
+            ->whereIn('student_id', $studentIds)
+            ->where('status', 'Menunggu Approval')
+            ->select('student_id')
+            ->selectRaw("COUNT(*) as total")
+            ->groupBy('student_id')
+            ->pluck('total', 'student_id');
+
+        $students = $placements->map(function ($p) use ($pendingJournals) {
+            $jPending = $pendingJournals[$p->student_id] ?? 0;
             return [
                 'id' => $p->student->id,
                 'placement_id' => $p->id,
@@ -215,8 +294,8 @@ class DashboardController extends Controller
             ];
         });
 
-        $pendingApprovals = Journal::with(['student.user'])
-            ->whereIn('student_id', $placements->pluck('student_id'))
+        $pendingApprovals = Journal::with(['student.user:id,name'])
+            ->whereIn('student_id', $studentIds)
             ->where('status', 'Menunggu Approval')
             ->orderBy('created_at', 'desc')
             ->get();
@@ -230,7 +309,7 @@ class DashboardController extends Controller
 
     private function siswaDashboard($user): Response
     {
-        $student = Student::with(['placement.company', 'placement.schoolSupervisor', 'latestApplication'])->where('user_id', $user->id)->first();
+        $student = Student::with(['placement.company:id,name', 'placement.schoolSupervisor:id,name', 'latestApplication'])->where('user_id', $user->id)->first();
         
         if (!$student) {
             return Inertia::render('Siswa/Dashboard', [
@@ -239,8 +318,14 @@ class DashboardController extends Controller
             ]);
         }
 
-        $totalAtt = Attendance::where('student_id', $student->id)->count();
-        $presentAtt = Attendance::where('student_id', $student->id)->where('status', 'Hadir')->count();
+        // Single query for attendance stats instead of 2 separate count queries
+        $attStats = Attendance::where('student_id', $student->id)
+            ->selectRaw("COUNT(*) as total")
+            ->selectRaw("SUM(CASE WHEN status = 'Hadir' THEN 1 ELSE 0 END) as present")
+            ->first();
+
+        $totalAtt = $attStats->total ?? 0;
+        $presentAtt = $attStats->present ?? 0;
         $attPercent = $totalAtt > 0 ? round(($presentAtt / $totalAtt) * 100) : null;
 
         $journalCount = Journal::where('student_id', $student->id)->count();

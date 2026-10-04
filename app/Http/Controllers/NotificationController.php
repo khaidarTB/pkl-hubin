@@ -13,21 +13,22 @@ class NotificationController extends Controller
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $dbNotifications = Notification::where('user_id', $user->id)
+        $notifications = Notification::select('id', 'title', 'message', 'type', 'is_read', 'link', 'created_at')
+            ->where('user_id', $user->id)
             ->orderBy('created_at', 'desc')
-            ->get();
-
-        $notifications = $dbNotifications->map(function ($item) {
-            return [
-                'id' => (string) $item->id,
-                'title' => $item->title,
-                'message' => $item->message,
-                'time' => $item->created_at ? $item->created_at->diffForHumans() : 'Baru saja',
-                'type' => $item->type,
-                'unread' => !$item->is_read,
-                'link' => $item->link,
-            ];
-        });
+            ->paginate(20)
+            ->withQueryString()
+            ->through(function ($item) {
+                return [
+                    'id' => (string) $item->id,
+                    'title' => $item->title,
+                    'message' => $item->message,
+                    'time' => $item->created_at ? $item->created_at->diffForHumans() : 'Baru saja',
+                    'type' => $item->type,
+                    'unread' => !$item->is_read,
+                    'link' => $item->link,
+                ];
+            });
 
         if ($notifications->isEmpty()) {
             $notifications = [

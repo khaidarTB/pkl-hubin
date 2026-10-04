@@ -17,5 +17,5 @@ export default defineConfig({
         alias: {
             '@': '/resources/js',
         },
-    },
+    }
 });

@@ -13,13 +13,26 @@ use Illuminate\Validation\Rule;
 class UserController extends Controller
 {
     // ================== GURU ==================
-    public function index(): Response
+    // ================== GURU ==================
+    public function index(Request $request): Response
     {
-        $users = User::where('role', 'guru')
-            ->latest()
-            ->get(['id', 'name', 'email', 'role', 'created_at']);
+        $search = $request->input('search');
 
-        return Inertia::render('Admin/Users/Index', compact('users'));
+        $query = User::where('role', 'guru')->latest();
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            });
+        }
+
+        $users = $query->paginate(15)->withQueryString();
+
+        return Inertia::render('Admin/Users/Index', [
+            'users' => $users,
+            'filters' => ['search' => $search],
+        ]);
     }
 
     public function store(Request $request)
@@ -74,29 +87,39 @@ class UserController extends Controller
     }
 
     // ================== SISWA ==================
-    public function studentsIndex(): Response
+    public function studentsIndex(Request $request): Response
     {
-        $students = Student::with(['user', 'placement.company'])
-            ->latest()
-            ->get()
-            ->map(function ($s) {
-                return [
-                    'id' => $s->id,
-                    'user_id' => $s->user_id,
-                    'name' => $s->user->name ?? 'Siswa',
-                    'email' => $s->user->email ?? '-',
-                    'nis' => $s->nis ?? '-',
-                    'class' => $s->class ?? '-',
-                    'major' => $s->major ?? '-',
-                    'phone' => $s->phone ?? '-',
-                    'company' => $s->placement->company->name ?? 'Belum Ada',
-                    'placement_status' => $s->placement->status ?? 'Belum Ditempatkan',
-                    'created_at' => $s->created_at->format('Y-m-d'),
-                ];
-            });
+        $search = $request->input('search');
+
+        $query = Student::with(['user:id,name,email', 'placement.company:id,name'])->latest();
+
+        if ($search) {
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
+            })->orWhere('nis', 'like', "%{$search}%")
+              ->orWhere('class', 'like', "%{$search}%");
+        }
+
+        $students = $query->paginate(15)->withQueryString()->through(function ($s) {
+            return [
+                'id' => $s->id,
+                'user_id' => $s->user_id,
+                'name' => $s->user->name ?? 'Siswa',
+                'email' => $s->user->email ?? '-',
+                'nis' => $s->nis ?? '-',
+                'class' => $s->class ?? '-',
+                'major' => $s->major ?? '-',
+                'phone' => $s->phone ?? '-',
+                'company' => $s->placement->company->name ?? 'Belum Ada',
+                'placement_status' => $s->placement->status ?? 'Belum Ditempatkan',
+                'created_at' => $s->created_at ? $s->created_at->format('Y-m-d') : '-',
+            ];
+        });
 
         return Inertia::render('Admin/Students/Index', [
             'students' => $students,
+            'filters' => ['search' => $search],
         ]);
     }
 

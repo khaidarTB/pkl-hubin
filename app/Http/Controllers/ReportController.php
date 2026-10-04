@@ -13,14 +13,45 @@ use App\Models\Assessment;
 
 class ReportController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $reports = Placement::with(['student.user', 'company', 'industry'])->get()->map(function ($p) {
-            $attCount = Attendance::where('student_id', $p->student_id)->where('status', 'Hadir')->count();
-            $totalDays = max(1, Attendance::where('student_id', $p->student_id)->count());
+        $search = $request->input('search');
+
+        $query = Placement::query()
+            ->with([
+                'student:id,user_id,nis,class,major',
+                'student.user:id,name',
+                'company:id,name',
+                'industry:id,name',
+            ])
+            ->addSelect([
+                'attendance_hadir_count' => Attendance::selectRaw('count(*)')
+                    ->whereColumn('student_id', 'placements.student_id')
+                    ->where('status', 'Hadir'),
+                'attendance_total_count' => Attendance::selectRaw('count(*)')
+                    ->whereColumn('student_id', 'placements.student_id'),
+                'journal_count' => Journal::selectRaw('count(*)')
+                    ->whereColumn('student_id', 'placements.student_id'),
+                'assessment_score' => Assessment::select('total_score')
+                    ->whereColumn('student_id', 'placements.student_id')
+                    ->limit(1),
+            ]);
+
+        if ($search) {
+            $query->whereHas('student.user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            })->orWhereHas('student', function ($q) use ($search) {
+                $q->where('nis', 'like', "%{$search}%")
+                  ->orWhere('class', 'like', "%{$search}%");
+            });
+        }
+
+        $reports = $query->paginate(20)->withQueryString()->through(function ($p) {
+            $attCount = (int) ($p->attendance_hadir_count ?? 0);
+            $totalDays = max(1, (int) ($p->attendance_total_count ?? 0));
             $attPercent = round(($attCount / $totalDays) * 100);
-            $journalCount = Journal::where('student_id', $p->student_id)->count();
-            $assessment = Assessment::where('student_id', $p->student_id)->first();
+            $journalCount = (int) ($p->journal_count ?? 0);
+            $score = $p->assessment_score ?? 'Belum Ada';
 
             return [
                 'nis' => $p->student->nis ?? '-',
@@ -30,13 +61,14 @@ class ReportController extends Controller
                 'industry' => $p->company->name ?? ($p->industry->name ?? 'Perusahaan Mitra'),
                 'attendance_percent' => $attPercent . '%',
                 'journal_total' => $journalCount,
-                'score' => $assessment ? $assessment->total_score : 'Belum Ada',
+                'score' => $score,
                 'status' => $p->status,
             ];
         });
 
         return Inertia::render('Report/Index', [
             'reports' => $reports,
+            'filters' => ['search' => $search],
         ]);
     }
 

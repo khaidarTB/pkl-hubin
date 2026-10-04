@@ -58,4 +58,8 @@ return [
         )))),
     ],
 
+    'wa_gateway' => [
+        'status' => env('WA_GATEWAY_STATUS', 'connected'),
+    ],
+
 ];

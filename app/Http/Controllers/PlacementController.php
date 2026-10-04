@@ -17,23 +17,40 @@ use Carbon\Carbon;
 class PlacementController extends Controller
 {
     // Hubin/Admin: List unplaced & placed students
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $search = $request->input('search');
+
         // Students with approved application who don't have placement yet
-        $unplacedStudents = Student::with(['user', 'latestApplication.company'])
+        $unplacedStudents = Student::select('id', 'user_id', 'nis', 'class', 'major')
+            ->with(['user:id,name', 'latestApplication.company:id,name'])
             ->whereHas('latestApplication', function ($q) {
                 $q->where('status', PklApplication::STATUS_APPROVED);
             })
             ->whereDoesntHave('placement')
             ->get();
 
-        $activePlacements = Placement::with(['student.user', 'company', 'schoolSupervisor', 'industrySupervisor'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = Placement::with([
+            'student:id,user_id,nis,class',
+            'student.user:id,name',
+            'company:id,name',
+            'schoolSupervisor:id,name',
+            'industrySupervisor:id,name'
+        ])->orderBy('created_at', 'desc');
 
-        $companies = Company::where('partnership_status', 'active')->get();
-        $teachers = User::where('role', 'guru')->get();
-        $industrySupervisors = User::where('role', 'industri')->get();
+        if ($search) {
+            $query->whereHas('student.user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            })->orWhereHas('company', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            });
+        }
+
+        $activePlacements = $query->paginate(15)->withQueryString();
+
+        $companies = Company::select('id', 'name')->where('partnership_status', 'active')->get();
+        $teachers = User::select('id', 'name')->where('role', 'guru')->get();
+        $industrySupervisors = User::select('id', 'name')->where('role', 'industri')->get();
         $activePeriod = PklPeriod::where('status', 'active')->first();
 
         return Inertia::render('Admin/Placements/Index', [
@@ -43,6 +60,7 @@ class PlacementController extends Controller
             'teachers' => $teachers,
             'industrySupervisors' => $industrySupervisors,
             'activePeriod' => $activePeriod,
+            'filters' => ['search' => $search],
         ]);
     }
 
