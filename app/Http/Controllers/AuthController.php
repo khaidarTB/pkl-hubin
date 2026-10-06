@@ -34,7 +34,9 @@ class AuthController extends Controller
             $request->session()->regenerate();
             $user = Auth::user();
 
-            return redirect()->intended(route('dashboard'));
+            // Paksa hard refresh: browser melakukan navigasi penuh ke dashboard
+            // (bukan soft navigation Inertia) supaya data & asset terbaru termuat.
+            return Inertia::location(redirect()->intended(route('dashboard')));
         }
 
         return back()->withErrors([
