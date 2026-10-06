@@ -2,17 +2,20 @@ import React, { useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { StatusBadge } from '@/Components/StatusBadge';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems } from '@/lib/pagination';
 import { Search, Filter, LineChart, ExternalLink, ShieldCheck } from 'lucide-react';
 
 interface Props {
-    students: any[];
+    students: Listable<any>;
 }
 
 export default function MonitoringIndex({ students }: Props) {
+    const studentItems = toItems(students);
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('Semua');
 
-    const filteredStudents = students.filter((s) => {
+    const filteredStudents = studentItems.filter((s) => {
         const matchesSearch = s.name.toLowerCase().includes(search.toLowerCase()) || 
                               s.nis.includes(search) || 
                               s.industry_name.toLowerCase().includes(search.toLowerCase());
@@ -110,6 +113,7 @@ export default function MonitoringIndex({ students }: Props) {
                         </tbody>
                     </table>
                 </div>
+                <Pagination source={students} />
             </div>
         </DashboardLayout>
     );

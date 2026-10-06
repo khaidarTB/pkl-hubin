@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems } from '@/lib/pagination';
 import { GraduationCap, Plus, Search, Edit3, Trash2, Eye, X, Check, Phone, Mail, Building2 } from 'lucide-react';
 
 interface StudentItem {
@@ -18,10 +20,11 @@ interface StudentItem {
 }
 
 interface Props {
-    students: StudentItem[];
+    students: Listable<StudentItem>;
 }
 
 export default function StudentsIndex({ students }: Props) {
+    const studentItems = toItems(students);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterClass, setFilterClass] = useState('all');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -89,9 +92,9 @@ export default function StudentsIndex({ students }: Props) {
         });
     };
 
-    const classList = Array.from(new Set(students.map(s => s.class))).filter(Boolean);
+    const classList = Array.from(new Set(studentItems.map(s => s.class))).filter(Boolean);
 
-    const filteredStudents = students.filter(s => {
+    const filteredStudents = studentItems.filter(s => {
         const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             s.nis.includes(searchTerm) ||
             s.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -225,6 +228,7 @@ export default function StudentsIndex({ students }: Props) {
                             </tbody>
                         </table>
                     </div>
+                    <Pagination source={students} />
                 </div>
             </div>
 

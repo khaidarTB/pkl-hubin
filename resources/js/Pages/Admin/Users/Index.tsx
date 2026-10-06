@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems } from '@/lib/pagination';
 import { Users, Plus, Trash2, Mail, Calendar, Edit3, X, Check, Search } from 'lucide-react';
 
 interface UserItem {
@@ -11,9 +13,10 @@ interface UserItem {
     created_at: string;
 }
 
-interface Props { users: UserItem[]; }
+interface Props { users: Listable<UserItem>; }
 
 export default function UsersIndex({ users }: Props) {
+    const userList = toItems(users);
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<UserItem | null>(null);
@@ -59,7 +62,7 @@ export default function UsersIndex({ users }: Props) {
         router.delete(`/admin/guru/${deleteId}`, { onSuccess: () => setDeleteId(null) });
     };
 
-    const filteredUsers = users.filter(u => 
+    const filteredUsers = userList.filter(u => 
         u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.email.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -153,6 +156,7 @@ export default function UsersIndex({ users }: Props) {
                                 </tbody>
                             </table>
                         </div>
+                        <Pagination source={users} />
                     </div>
                 )}
             </div>

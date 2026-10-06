@@ -2,14 +2,17 @@ import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { PklApplication } from '@/Types';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems } from '@/lib/pagination';
 import { FileText, Search, Filter, Check, XCircle, RefreshCw, Eye, Building2, User, Calendar, Download, ExternalLink } from 'lucide-react';
 
 interface Props {
-    applications: PklApplication[];
+    applications: Listable<PklApplication>;
     stats: { total: number; pending: number; revision: number; approved: number; rejected: number };
 }
 
 export default function ApplicationsIndex({ applications, stats }: Props) {
+    const applicationItems = toItems(applications);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState('all');
     const [detailApp, setDetailApp] = useState<PklApplication | null>(null);
@@ -17,7 +20,7 @@ export default function ApplicationsIndex({ applications, stats }: Props) {
     const [rejectReason, setRejectReason] = useState('');
     const [activeModal, setActiveModal] = useState<'approve' | 'revision' | 'reject' | null>(null);
 
-    const filtered = applications.filter((app) => {
+    const filtered = applicationItems.filter((app) => {
         const matchesSearch = app.student?.user?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             app.company_name.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesFilter = filterStatus === 'all' || app.status === filterStatus;
@@ -162,6 +165,7 @@ export default function ApplicationsIndex({ applications, stats }: Props) {
                             </tbody>
                         </table>
                     </div>
+                    <Pagination source={applications} />
                 </div>
             </div>
 

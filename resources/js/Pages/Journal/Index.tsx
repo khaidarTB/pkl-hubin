@@ -2,14 +2,17 @@ import React, { useState } from 'react';
 import { Head, useForm } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { StatusBadge } from '@/Components/StatusBadge';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems } from '@/lib/pagination';
 import { BookOpen, Plus, Send, CheckCircle2, Clock, AlertCircle, Edit3, Eye, X, Search, Calendar, Sparkles, FileDown } from 'lucide-react';
 import { Journal } from '@/Types';
 
 interface Props {
-    journals: Journal[];
+    journals: Listable<Journal>;
 }
 
 export default function JournalIndex({ journals }: Props) {
+    const journalItems = toItems(journals);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [selectedJournal, setSelectedJournal] = useState<Journal | null>(null);
     const [editingJournal, setEditingJournal] = useState<Journal | null>(null);
@@ -65,13 +68,13 @@ export default function JournalIndex({ journals }: Props) {
         });
     };
 
-    const filteredJournals = journals.filter(j =>
+    const filteredJournals = journalItems.filter(j =>
         j.activity.toLowerCase().includes(searchTerm.toLowerCase()) ||
         j.skill.toLowerCase().includes(searchTerm.toLowerCase()) ||
         j.date.includes(searchTerm)
     );
 
-    const revisionCount = journals.filter(j => j.status === 'Revision').length;
+    const revisionCount = journalItems.filter(j => j.status === 'Revision').length;
 
     return (
         <DashboardLayout>
@@ -231,6 +234,12 @@ export default function JournalIndex({ journals }: Props) {
                     ))
                 )}
             </div>
+
+            <Pagination
+                source={journals}
+                divider={false}
+                className="bg-white rounded-3xl border border-slate-100 shadow-sm"
+            />
 
             {/* MODAL DETAIL JURNAL */}
             {selectedJournal && (

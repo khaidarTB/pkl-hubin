@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { Company, PklPeriod, Placement, Student, User } from '@/Types';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems, toTotal } from '@/lib/pagination';
 import { MapPin, Users, Building2, CheckCircle2, Plus, Edit3, Trash2, X, Check, Search } from 'lucide-react';
 
 interface Props {
     unplacedStudents: Student[];
-    activePlacements: Placement[];
+    activePlacements: Listable<Placement>;
     companies: Company[];
     teachers: User[];
     industrySupervisors: User[];
@@ -14,6 +16,7 @@ interface Props {
 }
 
 export default function PlacementsIndex({ unplacedStudents, activePlacements, companies, teachers, industrySupervisors, activePeriod }: Props) {
+    const placementItems = toItems(activePlacements);
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -82,7 +85,7 @@ export default function PlacementsIndex({ unplacedStudents, activePlacements, co
         });
     };
 
-    const filteredPlacements = activePlacements.filter(p => {
+    const filteredPlacements = placementItems.filter(p => {
         const studentName = p.student?.user?.name || '';
         const companyName = p.company?.name || '';
         const teacherName = p.schoolSupervisor?.name || '';
@@ -112,7 +115,7 @@ export default function PlacementsIndex({ unplacedStudents, activePlacements, co
                         <div className="p-2.5 rounded-lg bg-emerald-50 text-emerald-600"><CheckCircle2 className="w-5 h-5" /></div>
                         <div>
                             <p className="text-[11px] text-slate-500">Penempatan Aktif</p>
-                            <p className="text-lg font-bold text-slate-900">{activePlacements.length}</p>
+                            <p className="text-lg font-bold text-slate-900">{toTotal(activePlacements)}</p>
                         </div>
                     </div>
                     <div className="bg-white rounded-xl p-4 border border-slate-200/80 flex items-center gap-3 shadow-sm">
@@ -230,6 +233,7 @@ export default function PlacementsIndex({ unplacedStudents, activePlacements, co
                             </tbody>
                         </table>
                     </div>
+                    <Pagination source={activePlacements} />
                 </div>
             </div>
 

@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { Company } from '@/Types';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems } from '@/lib/pagination';
 import { Building2, Plus, MapPin, Phone, Globe, Radar, Edit3, Trash2, X, Check, Search, Clock } from 'lucide-react';
 
-interface Props { companies: Company[]; }
+interface Props { companies: Listable<Company>; }
 
 export default function CompaniesIndex({ companies }: Props) {
+    const companyItems = toItems(companies);
     const [searchTerm, setSearchTerm] = useState('');
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingCompany, setEditingCompany] = useState<Company | null>(null);
@@ -71,7 +74,7 @@ export default function CompaniesIndex({ companies }: Props) {
         });
     };
 
-    const filteredCompanies = companies.filter(c => 
+    const filteredCompanies = companyItems.filter(c => 
         c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (c.industry_type || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         c.address.toLowerCase().includes(searchTerm.toLowerCase())
@@ -187,6 +190,11 @@ export default function CompaniesIndex({ companies }: Props) {
                         })}
                     </div>
                 )}
+                <Pagination
+                    source={companies}
+                    divider={false}
+                    className="bg-white rounded-2xl border border-slate-200/80 shadow-sm"
+                />
             </div>
 
             {/* ================= MODAL TAMBAH PERUSAHAAN ================= */}

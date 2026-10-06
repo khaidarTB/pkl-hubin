@@ -3,6 +3,8 @@ import { Head, Link } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { StatusBadge } from '@/Components/StatusBadge';
 import { StatCard } from '@/Components/StatCard';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems } from '@/lib/pagination';
 import { UserCheck, Building2, CalendarCheck, BookOpen, GraduationCap, MapPin, Phone, Mail, ArrowLeft } from 'lucide-react';
 import { Attendance, Journal, Assessment } from '@/Types';
 
@@ -29,12 +31,14 @@ interface Props {
         approved_journals: number;
         temp_score: number;
     };
-    attendances: Attendance[];
-    journals: Journal[];
+    attendances: Listable<Attendance>;
+    journals: Listable<Journal>;
     assessment: Assessment | null;
 }
 
 export default function MonitoringDetail({ student, stats, attendances, journals, assessment }: Props) {
+    const journalItems = toItems(journals);
+    const attendanceItems = toItems(attendances);
     return (
         <DashboardLayout>
             <Head title={`Detail PKL ${student.name}`} />
@@ -113,7 +117,7 @@ export default function MonitoringDetail({ student, stats, attendances, journals
                 <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
                     <h3 className="font-extrabold text-slate-900 text-base mb-4">Riwayat E-Jurnal Siswa</h3>
                     <div className="space-y-3">
-                        {journals.map((j) => (
+                        {journalItems.map((j) => (
                             <div key={j.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
                                 <div className="flex items-center justify-between mb-1">
                                     <span className="font-bold text-slate-900 text-xs">{j.activity}</span>
@@ -124,13 +128,14 @@ export default function MonitoringDetail({ student, stats, attendances, journals
                             </div>
                         ))}
                     </div>
+                    <Pagination source={journals} divider={false} />
                 </div>
 
                 {/* Log Presensi */}
                 <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm">
                     <h3 className="font-extrabold text-slate-900 text-base mb-4">Log Presensi Geolocation</h3>
                     <div className="space-y-3">
-                        {attendances.map((att) => (
+                        {attendanceItems.map((att) => (
                             <div key={att.id} className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-xs">
                                 <div>
                                     <p className="font-bold text-slate-900">{att.date}</p>
@@ -142,6 +147,7 @@ export default function MonitoringDetail({ student, stats, attendances, journals
                             </div>
                         ))}
                     </div>
+                    <Pagination source={attendances} divider={false} />
                 </div>
             </div>
         </DashboardLayout>

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Head, useForm, router, usePage } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems } from '@/lib/pagination';
 import { PklExtension, Placement, PageProps } from '@/Types';
 import { 
     Calendar, Plus, Search, FileText, CheckCircle2, XCircle, 
@@ -9,7 +11,7 @@ import {
 } from 'lucide-react';
 
 interface Props {
-    extensions: PklExtension[];
+    extensions: Listable<PklExtension>;
     myPlacements: Placement[];
     stats: {
         total: number;
@@ -26,6 +28,7 @@ export default function ExtensionIndex({
 }: Props) {
     const page = usePage<PageProps>();
     const userRole = page.props?.auth?.user?.role || 'siswa';
+    const extensionItems = toItems(extensions);
 
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -103,7 +106,7 @@ export default function ExtensionIndex({
         (userRole === 'admin' || item.requested_by === page.props?.auth?.user?.id);
 
     // Filtered extensions
-    const filteredExtensions = (extensions || []).filter(item => {
+    const filteredExtensions = extensionItems.filter(item => {
         const studentName = item.student?.user?.name || '';
         const companyName = item.placement?.company?.name || '';
         const matchesSearch = studentName.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -342,6 +345,7 @@ export default function ExtensionIndex({
                             </tbody>
                         </table>
                     </div>
+                    <Pagination source={extensions} />
                 </div>
             </div>
 

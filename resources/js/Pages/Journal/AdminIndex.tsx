@@ -2,16 +2,19 @@ import React, { useState } from 'react';
 import { Head } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { StatusBadge } from '@/Components/StatusBadge';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems } from '@/lib/pagination';
 import { BookOpen, Search, Filter } from 'lucide-react';
 
 interface Props {
-    journals: any[];
+    journals: Listable<any>;
 }
 
 export default function JournalAdminIndex({ journals }: Props) {
+    const journalItems = toItems(journals);
     const [search, setSearch] = useState('');
 
-    const filtered = journals.filter((j) => {
+    const filtered = journalItems.filter((j) => {
         const studentName = j.student?.user?.name || '';
         const activity = j.activity || '';
         return (
@@ -114,6 +117,12 @@ export default function JournalAdminIndex({ journals }: Props) {
                     ))
                 )}
             </div>
+
+            <Pagination
+                source={journals}
+                divider={false}
+                className="bg-white rounded-3xl border border-slate-100 shadow-sm"
+            />
         </DashboardLayout>
     );
 }

@@ -2,13 +2,16 @@ import React from 'react';
 import { Head, router } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { StatusBadge } from '@/Components/StatusBadge';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems, toTotal } from '@/lib/pagination';
 import { FileSpreadsheet, FileText, Download, Printer, ShieldCheck } from 'lucide-react';
 
 interface Props {
-    reports: any[];
+    reports: Listable<any>;
 }
 
 export default function ReportIndex({ reports }: Props) {
+    const reportItems = toItems(reports);
     const handleExportExcel = () => {
         router.post('/laporan/export-excel');
     };
@@ -48,7 +51,7 @@ export default function ReportIndex({ reports }: Props) {
             <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-slate-100 flex items-center justify-between">
                     <h3 className="font-extrabold text-slate-900 text-base">Rekapitulasi Nasional PKL SMK</h3>
-                    <span className="text-xs font-semibold text-slate-500">{reports.length} Data Terdaftar</span>
+                    <span className="text-xs font-semibold text-slate-500">{toTotal(reports)} Data Terdaftar</span>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -66,7 +69,7 @@ export default function ReportIndex({ reports }: Props) {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                            {reports.map((r, i) => (
+                            {reportItems.map((r, i) => (
                                 <tr key={i} className="hover:bg-slate-50/80 transition-colors">
                                     <td className="p-4 font-mono font-bold text-slate-900">{r.nis}</td>
                                     <td className="p-4 font-bold text-slate-900">{r.name}</td>
@@ -83,6 +86,7 @@ export default function ReportIndex({ reports }: Props) {
                         </tbody>
                     </table>
                 </div>
+                <Pagination source={reports} />
             </div>
         </DashboardLayout>
     );

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems } from '@/lib/pagination';
 import { Company, Student, Visit, User, PageProps } from '@/Types';
 import { 
     Calendar, 
@@ -26,13 +28,14 @@ import {
 } from 'lucide-react';
 
 interface Props { 
-    visits: Visit[]; 
+    visits: Listable<Visit>; 
     myStudents: Student[]; 
     companies: Company[];
     teachers?: User[];
 }
 
 export default function VisitsIndex({ visits, myStudents, companies, teachers = [] }: Props) {
+    const visitItems = toItems(visits);
     const { auth } = usePage<PageProps>().props;
     const currentUser = auth.user;
 
@@ -69,14 +72,14 @@ export default function VisitsIndex({ visits, myStudents, companies, teachers = 
     const selectedStudent = myStudents.find(s => s.id.toString() === selectedStudentId);
     const selectedStudentCompany = selectedStudent?.placement?.company || companies.find(c => c.id === selectedStudent?.placement?.company_id) || companies[0];
 
-    // Calculated metrics
-    const totalVisits = visits.length;
-    const scheduledVisits = visits.filter(v => v.status === 'scheduled').length;
-    const completedVisits = visits.filter(v => v.status === 'completed').length;
-    const uniqueCompanies = new Set(visits.map(v => v.company_id || v.company?.id)).size;
+    // Calculated metrics (scoped to the currently loaded page)
+    const totalVisits = visitItems.length;
+    const scheduledVisits = visitItems.filter(v => v.status === 'scheduled').length;
+    const completedVisits = visitItems.filter(v => v.status === 'completed').length;
+    const uniqueCompanies = new Set(visitItems.map(v => v.company_id || v.company?.id)).size;
 
     // Filtered visits
-    const filteredVisits = visits.filter((visit) => {
+    const filteredVisits = visitItems.filter((visit) => {
         const matchesStatus = 
             statusFilter === 'all' ? true :
             statusFilter === 'scheduled' ? visit.status === 'scheduled' :
@@ -408,6 +411,12 @@ export default function VisitsIndex({ visits, myStudents, companies, teachers = 
                     </div>
                 )}
             </div>
+
+            <Pagination
+                source={visits}
+                divider={false}
+                className="bg-white rounded-3xl border border-slate-200/80 shadow-sm"
+            />
 
             {/* MODAL: Jadwal Kunjungan Baru */}
             {isScheduleModalOpen && (

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems } from '@/lib/pagination';
 import { ShieldCheck, QrCode, Search, Eye, Ban, CheckCircle2, XCircle, AlertTriangle, FileText, ScanLine } from 'lucide-react';
 
 interface VerificationRow {
@@ -10,7 +12,7 @@ interface VerificationRow {
     verification_count: number; document_title?: string;
 }
 interface Props {
-    verifications: VerificationRow[];
+    verifications: Listable<VerificationRow>;
     stats: { total: number; valid: number; revoked: number; expired: number; scans: number };
     filters: { status: string; search: string };
 }
@@ -19,6 +21,7 @@ const MONTHS_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep'
 const formatDate = (iso?: string) => { if (!iso) return '-'; const d = new Date(iso); return `${d.getDate()} ${MONTHS_ID[d.getMonth()]} ${d.getFullYear()}`; };
 
 export default function DocumentVerificationIndex({ verifications, stats, filters }: Props) {
+    const verificationItems = toItems(verifications);
     const [search, setSearch] = useState(filters.search || '');
     const applyFilters = (status: string) => { router.get('/admin/verifikasi-dokumen', { status, search }, { preserveState: true, replace: true }); };
     const submitSearch = (e: React.FormEvent) => { e.preventDefault(); router.get('/admin/verifikasi-dokumen', { status: filters.status, search }, { preserveState: true, replace: true }); };
@@ -91,7 +94,7 @@ export default function DocumentVerificationIndex({ verifications, stats, filter
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {verifications.map((v) => (
+                                {verificationItems.map((v) => (
                                     <tr key={v.id} className="hover:bg-slate-50/60">
                                         <td className="px-5 py-3">
                                             <span className="font-mono font-semibold text-emerald-600">{v.verification_code}</span>
@@ -122,12 +125,13 @@ export default function DocumentVerificationIndex({ verifications, stats, filter
                                         </td>
                                     </tr>
                                 ))}
-                                {verifications.length === 0 && (
+                                {verificationItems.length === 0 && (
                                     <tr><td colSpan={6} className="px-5 py-12 text-center text-slate-400 text-[13px]">Tidak ada dokumen ditemukan.</td></tr>
                                 )}
                             </tbody>
                         </table>
                     </div>
+                    <Pagination source={verifications} />
                 </div>
             </div>
         </DashboardLayout>

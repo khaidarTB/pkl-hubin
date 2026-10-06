@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { Document as DocumentType, DocumentTemplate } from '@/Types';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems } from '@/lib/pagination';
 import { FileText, QrCode, CheckCircle2, XCircle, AlertTriangle, Clock, Eye, Plus, FilePlus } from 'lucide-react';
 
-interface Props { documents: DocumentType[]; templates: DocumentTemplate[]; }
+interface Props { documents: Listable<DocumentType>; templates: DocumentTemplate[]; }
 
 const VERIFICATION_STATUS_META = {
     VALID: { icon: CheckCircle2, label: 'Valid', cls: 'bg-emerald-50 text-emerald-700' },
@@ -13,6 +15,7 @@ const VERIFICATION_STATUS_META = {
 } as const;
 
 export default function DocumentIndex({ documents, templates }: Props) {
+    const documentItems = toItems(documents);
     const [isTemplateModalOpen, setIsTemplateModalOpen] = useState(false);
     const [isCreateDocModalOpen, setIsCreateDocModalOpen] = useState(false);
     const templateForm = useForm({ name: '', description: '', type: 'surat_tugas' });
@@ -85,7 +88,7 @@ export default function DocumentIndex({ documents, templates }: Props) {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {documents.map((doc) => {
+                                {documentItems.map((doc) => {
                                     const v = doc.verification;
                                     const status = v?.status;
                                     const meta = status && status in VERIFICATION_STATUS_META ? VERIFICATION_STATUS_META[status as keyof typeof VERIFICATION_STATUS_META] : null;
@@ -118,6 +121,7 @@ export default function DocumentIndex({ documents, templates }: Props) {
                             </tbody>
                         </table>
                     </div>
+                    <Pagination source={documents} />
                 </div>
             </div>
 

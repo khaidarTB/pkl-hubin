@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Head, router } from '@inertiajs/react';
 import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { StatusBadge } from '@/Components/StatusBadge';
+import { Pagination } from '@/Components/Pagination';
+import { Listable, toItems } from '@/lib/pagination';
 import { CheckCircle2, AlertCircle, PenLine, UploadCloud, ImageIcon, FileUp } from 'lucide-react';
 
 interface Props {
-    journals: any[];
+    journals: Listable<any>;
 }
 
 function approverRoleLabel(role?: string) {
@@ -15,6 +17,7 @@ function approverRoleLabel(role?: string) {
 }
 
 export default function JournalApproval({ journals }: Props) {
+    const journalItems = toItems(journals);
     const [selectedJournal, setSelectedJournal] = useState<any | null>(null);
     const [revisionNote, setRevisionNote] = useState('');
     const [showModal, setShowModal] = useState(false);
@@ -101,12 +104,12 @@ export default function JournalApproval({ journals }: Props) {
 
             {/* List Jurnal Pengajuan */}
             <div className="space-y-4">
-                {journals.length === 0 ? (
+                {journalItems.length === 0 ? (
                     <div className="bg-white rounded-3xl p-12 text-center border border-slate-100 shadow-sm text-slate-400">
                         Belum ada jurnal kegiatan yang diajukan siswa.
                     </div>
                 ) : (
-                    journals.map((j) => (
+                    journalItems.map((j) => (
                         <div key={j.id} className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
                                 <div>
@@ -191,6 +194,12 @@ export default function JournalApproval({ journals }: Props) {
                     ))
                 )}
             </div>
+
+            <Pagination
+                source={journals}
+                divider={false}
+                className="bg-white rounded-3xl border border-slate-100 shadow-sm"
+            />
 
             {/* Modal Approve dengan Upload Tanda Tangan */}
             {showApproveModal && approveJournal && (
