@@ -4,8 +4,17 @@ import { createRoot } from 'react-dom/client';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { Toaster } from 'sonner';
+import InstallPwa from './Components/InstallPwa';
 
 const appName = import.meta.env.VITE_APP_NAME || 'PKLConnect';
+
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {
+            /* service worker registration failed */
+        });
+    });
+}
 
 const appElement = document.getElementById('app');
 
@@ -19,6 +28,7 @@ if (appElement || typeof window === 'undefined') {
                 root.render(
                     <>
                         <App {...props} />
+                        <InstallPwa />
                         <Toaster
                             position="top-right"
                             richColors

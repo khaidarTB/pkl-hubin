@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>PKLConnect - Tidak Ada Koneksi</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+            background: #F8FAFC;
+            color: #0F172A;
+            padding: 24px;
+        }
+        .card {
+            max-width: 380px;
+            text-align: center;
+            background: #fff;
+            border: 1px solid #E2E8F0;
+            border-radius: 20px;
+            padding: 40px 28px;
+            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+        }
+        .badge {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ECFDF5;
+            color: #059669;
+            font-size: 30px;
+        }
+        h1 { font-size: 20px; margin: 0 0 8px; }
+        p { color: #64748B; font-size: 14px; line-height: 1.6; margin: 0 0 24px; }
+        button {
+            border: 0;
+            cursor: pointer;
+            background: #059669;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 12px 24px;
+            border-radius: 12px;
+            width: 100%;
+        }
+        button:hover { background: #047857; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="badge">&#9888;</div>
+        <h1>Tidak Ada Koneksi Internet</h1>
+        <p>Periksa jaringan Anda lalu coba lagi. Halaman yang sudah pernah dibuka mungkin masih tersedia.</p>
+        <button onclick="location.reload()">Coba Lagi</button>
+    </div>
+</body>
+</html>

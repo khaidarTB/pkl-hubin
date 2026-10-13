@@ -2,10 +2,20 @@
 <html lang="id">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title inertia>PKLConnect - Satu Platform, Satu Data, Monitoring PKL Lebih Mudah</title>
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.webmanifest">
+    <meta name="theme-color" content="#059669">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PKLConnect">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
