@@ -1,156 +1,106 @@
 import React, { useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
-import { Sparkles, ArrowRight, Menu, X } from 'lucide-react';
+import { ArrowRight, Menu, X } from 'lucide-react';
 import { PageProps } from '@/Types';
 
-interface NavbarProps {
-    showNexa?: boolean;
-}
+const navigationItems = [
+    { label: 'Foto ilustrasi', section: 'galeri' },
+    { label: 'Mitra', section: 'mitra' },
+    { label: 'Alur PKL', section: 'alur' },
+    { label: 'Program keahlian', section: 'program' },
+];
 
-export const Navbar: React.FC<NavbarProps> = ({ showNexa = true }) => {
-    const { props } = usePage<PageProps>();
+export const Navbar: React.FC = () => {
+    const { props, url } = usePage<PageProps>();
     const auth = props?.auth;
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const isLandingPage = url.split('?')[0] === '/';
+
+    const sectionHref = (section: string) =>
+        `${isLandingPage ? '' : '/'}#${section}`;
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-emerald-100 shadow-sm transition-all duration-300">
-            <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2">
-                {/* Brand Logo SMK Taruna Bangsa */}
-                <Link href="/" className="flex items-center gap-2 sm:gap-3 group shrink-0 min-w-0">
-                    <div className="w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-tr flex items-center justify-center font-black text-white text-base sm:text-xl group-hover:scale-105 transition-all duration-300 shrink-0">
-                        <img src="/img/pklconnect_logo.png" alt="pklconnect logo" className="w-full h-full object-contain" />
-                    </div>
-                    <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 sm:gap-2">
-                            <span className="font-black text-xs sm:text-lg lg:text-xl tracking-tight text-slate-900 group-hover:text-emerald-700 transition-colors truncate">
-                                SMK Taruna Bangsa
-                            </span>
-                            <span className="inline-block px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0">
-                                PKLConnect
-                            </span>
-                        </div>
-                        <p className="text-[10px] text-slate-500 font-semibold hidden md:block truncate">
-                            Portal Manajemen Praktik Kerja Lapangan & Kemitraan DUDI
-                        </p>
-                    </div>
+        <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white">
+            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-8 lg:h-20 lg:px-12">
+                <Link
+                    href="/"
+                    className="flex min-w-0 items-center gap-2.5 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
+                >
+                    <img
+                        src="/img/pklconnect_logo.png"
+                        alt=""
+                        className="h-10 w-10 shrink-0 object-contain"
+                    />
+                    <span className="min-w-0">
+                        <span className="block truncate text-sm font-bold tracking-tight text-slate-950 sm:text-base">
+                            PKLConnect
+                        </span>
+                        <span className="hidden text-xs text-slate-600 sm:block">
+                            SMK Taruna Bangsa
+                        </span>
+                    </span>
                 </Link>
 
-                {/* Desktop Nav Links */}
-                <nav className="hidden md:flex items-center gap-6 lg:gap-8 text-xs font-extrabold uppercase tracking-wider text-slate-700">
-                    <a 
-                        href="#galeri" 
-                        className="relative py-1 text-slate-700 hover:text-emerald-600 transition-colors after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-emerald-500 hover:after:w-full after:transition-all after:duration-300"
-                    >
-                        Galeri PKL
-                    </a>
-                    <a 
-                        href="#mitra" 
-                        className="relative py-1 text-slate-700 hover:text-emerald-600 transition-colors after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-emerald-500 hover:after:w-full after:transition-all after:duration-300"
-                    >
-                        Mitra Industri
-                    </a>
-                    <a 
-                        href="#alur" 
-                        className="relative py-1 text-slate-700 hover:text-emerald-600 transition-colors after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-emerald-500 hover:after:w-full after:transition-all after:duration-300"
-                    >
-                        Alur Siklus
-                    </a>
-                    <a 
-                        href="#program" 
-                        className="relative py-1 text-slate-700 hover:text-emerald-600 transition-colors after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-emerald-500 hover:after:w-full after:transition-all after:duration-300"
-                    >
-                        Program Keahlian
-                    </a>
-                    {showNexa && (
-                        <a 
-                            href="#nexa" 
-                            className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-extrabold hover:bg-emerald-100 hover:scale-105 transition-all shadow-xs"
+                <nav aria-label="Navigasi utama" className="hidden items-center gap-6 lg:flex">
+                    {navigationItems.map((item) => (
+                        <a
+                            key={item.section}
+                            href={sectionHref(item.section)}
+                            className="rounded-sm py-2 text-sm font-medium text-slate-700 hover:text-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
                         >
-                            <Sparkles className="w-4 h-4 text-emerald-600" /> NEXA AI
+                            {item.label}
                         </a>
-                    )}
+                    ))}
                 </nav>
 
-                {/* Action CTA & Mobile Menu Button */}
-                <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-                    {auth?.user ? (
-                        <Link
-                            href="/dashboard"
-                            className="flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-6 sm:py-2.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-green-700 text-white font-extrabold text-[11px] sm:text-xs shadow-md shadow-emerald-600/30 hover:scale-105 transition-all duration-300 whitespace-nowrap"
-                        >
-                            <span>Dashboard</span>
-                            <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                        </Link>
-                    ) : (
-                        <>
-                            <Link
-                                href="/login"
-                                className="hidden sm:inline-flex items-center px-3 py-2 rounded-xl text-xs font-extrabold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-all whitespace-nowrap"
-                            >
-                                Masuk
-                            </Link>
-                            <Link
-                                href="/login"
-                                className="flex items-center gap-1.5 sm:gap-2 px-3 py-2 sm:px-6 sm:py-2.5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-green-700 text-white font-extrabold text-[11px] sm:text-xs shadow-md shadow-emerald-600/30 hover:scale-105 hover:shadow-emerald-600/50 transition-all duration-300 whitespace-nowrap"
-                            >
-                                <span>Prototype PKL</span>
-                                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                            </Link>
-                        </>
-                    )}
-
-                    {/* Mobile Menu Toggle Button */}
-                    <button
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="md:hidden p-2 rounded-xl text-slate-700 hover:bg-slate-100 transition-colors"
-                        aria-label="Toggle Navigation Menu"
+                <div className="flex shrink-0 items-center gap-2">
+                    <Link
+                        href={auth?.user ? '/dashboard' : '/login'}
+                        className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-3.5 py-2 text-sm font-semibold text-white hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 sm:px-4"
                     >
-                        {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                        <span className="hidden sm:inline">
+                            {auth?.user ? 'Dashboard' : 'Login pengguna'}
+                        </span>
+                        <span className="sm:hidden">{auth?.user ? 'Dashboard' : 'Masuk'}</span>
+                        <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                    </Link>
+                    <button
+                        type="button"
+                        onClick={() => setMobileMenuOpen((open) => !open)}
+                        className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 lg:hidden"
+                        aria-label={mobileMenuOpen ? 'Tutup menu' : 'Buka menu'}
+                        aria-expanded={mobileMenuOpen}
+                        aria-controls="mobile-navigation"
+                    >
+                        {mobileMenuOpen ? (
+                            <X aria-hidden="true" className="h-5 w-5" />
+                        ) : (
+                            <Menu aria-hidden="true" className="h-5 w-5" />
+                        )}
                     </button>
                 </div>
             </div>
 
-            {/* Mobile Dropdown Menu */}
             {mobileMenuOpen && (
-                <div className="md:hidden border-t border-slate-100 bg-white/98 backdrop-blur-xl px-4 py-4 space-y-3 shadow-xl">
-                    <a
-                        href="#galeri"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block px-3 py-2 rounded-lg text-xs font-extrabold uppercase text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
-                    >
-                        Galeri PKL
-                    </a>
-                    <a
-                        href="#mitra"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block px-3 py-2 rounded-lg text-xs font-extrabold uppercase text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
-                    >
-                        Mitra Industri
-                    </a>
-                    <a
-                        href="#alur"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block px-3 py-2 rounded-lg text-xs font-extrabold uppercase text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
-                    >
-                        Alur Siklus
-                    </a>
-                    <a
-                        href="#program"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block px-3 py-2 rounded-lg text-xs font-extrabold uppercase text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
-                    >
-                        Program Keahlian
-                    </a>
-                    {!auth?.user && (
-                        <Link
-                            href="/login"
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="block px-3 py-2 rounded-lg text-xs font-extrabold uppercase text-emerald-700 bg-emerald-50"
-                        >
-                            Masuk Portal PKL
-                        </Link>
-                    )}
-                </div>
+                <nav
+                    id="mobile-navigation"
+                    aria-label="Navigasi seluler"
+                    className="border-t border-slate-200 bg-white px-4 py-3 sm:px-8 lg:hidden"
+                >
+                    <ul className="mx-auto max-w-7xl divide-y divide-slate-100">
+                        {navigationItems.map((item) => (
+                            <li key={item.section}>
+                                <a
+                                    href={sectionHref(item.section)}
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    className="block rounded-sm py-3 text-sm font-medium text-slate-700 hover:text-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"
+                                >
+                                    {item.label}
+                                </a>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
             )}
         </header>
     );

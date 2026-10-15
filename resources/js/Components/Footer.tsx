@@ -1,69 +1,87 @@
 import React from 'react';
 import { Link } from '@inertiajs/react';
-import { ShieldCheck, Heart, Building2 } from 'lucide-react';
 
-const supportersLogo = [
-    "/img/supporters/jhic_2.png",
-    "/img/supporters/jagoan_hosting_logo.png",
-    "/img/supporters/komdigi.png",
-    "/img/supporters/garuda_spark.png",
-    "/img/supporters/ngalup.png",
-]
+const supporters = [
+    { name: 'JHIC', logo: '/img/supporters/jhic_2.png' },
+    { name: 'Jagoan Hosting', logo: '/img/supporters/jagoan_hosting_logo.png' },
+    { name: 'Komdigi', logo: '/img/supporters/komdigi.png' },
+    { name: 'Garuda Spark', logo: '/img/supporters/garuda_spark.png' },
+    { name: 'Ngalup', logo: '/img/supporters/ngalup.png' },
+];
+
+const footerLinks = [
+    { label: 'Perusahaan mitra', href: '/#mitra' },
+    { label: 'Program keahlian', href: '/#program' },
+    { label: 'Alur PKL', href: '/#alur' },
+];
 
 export const Footer: React.FC = () => {
     return (
-        <footer className="bg-slate-950 text-white border-t border-slate-800 py-12">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
-                    <div className="md:col-span-2">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-2xl flex items-center justify-center font-black text-white text-xl">
-                                <img src="/img/pklconnect_logo.png" alt="pklconnect logo" />
-                            </div>
-                            <div>
-                                <span className="font-extrabold text-xl tracking-tight block">Hubin SMK Taruna Bangsa</span>
-                                <span className="text-xs text-cyan-400 font-semibold">PKLConnect Management System</span>
-                            </div>
-                        </div>
-                        <p className="text-slate-400 text-xs leading-relaxed max-w-md">
-                            Sistem Informasi Hubungan Industri & Monitoring Praktik Kerja Lapangan (PKL) Terintegrasi SMK Taruna Bangsa. Mengelola sinergi antara siswa vokasi, guru pembimbing, dan perusahaan mitra nasional.
-                        </p>
-                        <p className="text-xs text-cyan-400 font-bold mt-4">
-                            "Vokasi Unggul, Kemitraan Industri Nyata, Masa Depan Gemilang."
+        <footer className="border-t border-slate-800 bg-slate-950 text-slate-300">
+            <div className="mx-auto max-w-7xl px-4 py-10 sm:px-8 lg:px-12">
+                <div className="grid gap-8 sm:grid-cols-[1.3fr_0.7fr]">
+                    <div>
+                        <Link
+                            href="/"
+                            className="inline-flex items-center gap-3 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                        >
+                            <img
+                                src="/img/pklconnect_logo_white.png"
+                                alt=""
+                                className="h-10 w-10 object-contain"
+                            />
+                            <span>
+                                <span className="block font-semibold text-white">PKLConnect</span>
+                                <span className="block text-sm text-slate-400">
+                                    SMK Taruna Bangsa
+                                </span>
+                            </span>
+                        </Link>
+                        <p className="mt-4 max-w-md text-sm leading-6 text-slate-400">
+                            Portal untuk mengelola pengajuan, penempatan, pemantauan, dan
+                            penilaian Praktik Kerja Lapangan.
                         </p>
                     </div>
 
                     <div>
-                        <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-4">Modul Platform</h4>
-                        <ul className="space-y-2 text-xs text-slate-400">
-                            <li><Link href="/login" className="hover:text-cyan-400 transition-colors">Pendaftaran & Approval Hubin</Link></li>
-                            <li><Link href="/login" className="hover:text-cyan-400 transition-colors">Absensi GPS Geolocation</Link></li>
-                            <li><Link href="/login" className="hover:text-cyan-400 transition-colors">E-Jurnal Real-time Siswa</Link></li>
-                            <li><Link href="/login" className="hover:text-cyan-400 transition-colors">Surat Tugas & TTD Digital</Link></li>
-                            <li><Link href="/login" className="hover:text-cyan-400 transition-colors">Penilaian Industri Standard 7 Aspek</Link></li>
+                        <h2 className="text-sm font-semibold text-white">Jelajahi</h2>
+                        <ul className="mt-3 space-y-2">
+                            {footerLinks.map((item) => (
+                                <li key={item.href}>
+                                    <a
+                                        href={item.href}
+                                        className="rounded-sm text-sm text-slate-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                                    >
+                                        {item.label}
+                                    </a>
+                                </li>
+                            ))}
+                            <li>
+                                <Link
+                                    href="/login"
+                                    className="rounded-sm text-sm text-slate-300 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                                >
+                                    Login pengguna
+                                </Link>
+                            </li>
                         </ul>
-                    </div>
-
-                    <div>
-                        <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-300 mb-4">Kemitraan Industri</h4>
-                        <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                            Sektor Kerja Sama: Rekayasa Perangkat Lunak, Teknik Komputer & Jaringan, DKV, Teknik Otomotif.
-                        </p>
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-xs font-semibold text-emerald-400">
-                            <ShieldCheck className="w-4 h-4" /> Terverifikasi DUDI & Vokasi
-                        </div>
                     </div>
                 </div>
 
-                <div className="pt-8 border-t border-slate-900 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4 text-center sm:text-left">
-                    <p>© 2026 Hubin SMK Taruna Bangsa — PKLConnect System. All rights reserved.</p>
-                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3">
-                        <span className="shrink-0 text-slate-400 font-medium">Didukung oleh :</span>
-                        <div className="container-supporters-logo flex flex-wrap items-center justify-center gap-3">
-                            {supportersLogo.map((supporterLogo, i) => (
-                                <img key={i} className="h-6 sm:h-7 w-auto object-contain brightness-90 hover:brightness-100 transition-all" src={supporterLogo} alt="supporter logo" />
-                            ))}
-                        </div>
+                <div className="mt-8 flex flex-col gap-5 border-t border-slate-800 pt-6 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-xs leading-5 text-slate-400">
+                        © 2026 Hubin SMK Taruna Bangsa · PKLConnect
+                    </p>
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                        <span className="text-xs text-slate-400">Didukung oleh</span>
+                        {supporters.map((supporter) => (
+                            <img
+                                key={supporter.name}
+                                src={supporter.logo}
+                                alt={supporter.name}
+                                className="h-6 w-auto max-w-24 object-contain opacity-80"
+                            />
+                        ))}
                     </div>
                 </div>
             </div>

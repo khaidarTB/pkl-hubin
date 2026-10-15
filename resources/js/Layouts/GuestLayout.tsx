@@ -11,7 +11,7 @@ interface Props {
 export const GuestLayout: React.FC<Props> = ({ children, showNexa = true }) => {
     return (
         <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
-            <Navbar showNexa={showNexa} />
+            <Navbar />
             <main className="flex-1 pt-20">
                 {children}
             </main>

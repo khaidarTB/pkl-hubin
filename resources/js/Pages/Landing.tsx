@@ -1,384 +1,475 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Head, Link } from '@inertiajs/react';
 import { GuestLayout } from '@/Layouts/GuestLayout';
-import { 
-    Sparkles, 
-    ArrowRight, 
-    CheckCircle2, 
-    ShieldCheck, 
-    CalendarCheck, 
-    BookOpen, 
-    GraduationCap, 
-    LineChart, 
-    MessageSquare, 
-    FileText, 
-    AlertTriangle,
-    Users,
-    Building2,
-    Zap,
-    MapPin,
-    QrCode,
+import {
+    ArrowDown,
+    ArrowLeft,
+    ArrowRight,
+    ArrowUpRight,
+    CalendarCheck,
     CheckSquare,
-    ChevronLeft,
-    ChevronRight,
-    Award,
-    Briefcase,
-    Globe,
     Cpu,
+    FileText,
+    Globe,
+    Pause,
+    Play,
+    QrCode,
+    Sparkles,
     Wrench,
-    Check
 } from 'lucide-react';
 
 interface Props {
-    stats: {
-        total_students: number;
-        active_students: number;
-        industries: number;
-        digital_percentage: string;
-        admin_reduction: string;
-    };
-    partnerships?: Array<{ id: number; name: string; industry_type: string }>;
-    documentations?: Array<{ id: number; title: string; photo_path: string; category: string }>;
+    companies?: Array<{
+        id: number;
+        name: string;
+        industry_type?: string | null;
+    }>;
 }
 
-export default function Landing({ stats, partnerships = [], documentations = [] }: Props) {
+const gallerySlides = [
+    {
+        title: 'Pengajuan dan penempatan',
+        description: 'Siswa mengajukan PKL dan melihat proses penempatannya.',
+        category: 'Pengajuan',
+        image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1400&q=80',
+    },
+    {
+        title: 'Kegiatan di tempat PKL',
+        description: 'Siswa mencatat kegiatan selama menjalani praktik kerja.',
+        category: 'Kegiatan',
+        image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1400&q=80',
+    },
+    {
+        title: 'Pemantauan siswa',
+        description: 'Guru pembimbing memantau perkembangan dan kunjungan PKL.',
+        category: 'Monitoring',
+        image: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1400&q=80',
+    },
+    {
+        title: 'Penilaian hasil PKL',
+        description: 'Pembimbing industri mengisi penilaian siswa.',
+        category: 'Penilaian',
+        image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1400&q=80',
+    },
+];
 
-    const gallerySlides = [
-        {
-            id: 1,
-            title: "Penandatanganan MoU Sinergi Vokasi & Industri 2026",
-            subtitle: "SMK Taruna Bangsa bekerjasama resmi dengan PT Astra International & PT Telkom Indonesia",
-            category: "MoU & Kemitraan DUDI",
-            image: "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1400&q=80",
-            badge: "Kerja Sama Resmi DUDI"
-        },
-        {
-            id: 2,
-            title: "Pelepasan & Pembekalan Siswa PKL Taruna Bangsa",
-            subtitle: "Pengarahan etika kerja, keselamatan K3, dan penggunaan sistem presensi GPS PKLConnect",
-            category: "Pembekalan Siswa",
-            image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1400&q=80",
-            badge: "500+ Siswa Ditempatkan"
-        },
-        {
-            id: 3,
-            title: "Kunjungan Monitoring Guru Pembimbing Ke Perusahaan Mitra",
-            subtitle: "Evaluasi berkala kompetensi teknis dan koordinasi dengan Mentor Pembimbing Industri",
-            category: "Monitoring Lapangan",
-            image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1400&q=80",
-            badge: "Verifikasi Geolocation"
-        },
-        {
-            id: 4,
-            title: "Praktik Industri Lab RPL & Digital Innovation Center",
-            subtitle: "Siswa jurusan Rekayasa Perangkat Lunak mengerjakan project real-world di PT Digital Nusantara",
-            category: "Praktik Industri",
-            image: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1400&q=80",
-            badge: "Standar Industri Tier-1"
-        }
-    ];
+const majors = [
+    {
+        name: 'Rekayasa Perangkat Lunak (RPL)',
+        description: 'Pengembangan perangkat lunak dan pengelolaan basis data.',
+        icon: Cpu,
+    },
+    {
+        name: 'Teknik Komputer dan Jaringan (TKJ)',
+        description: 'Komputer, jaringan, dan infrastruktur server.',
+        icon: Globe,
+    },
+    {
+        name: 'Desain Komunikasi Visual (DKV)',
+        description: 'Komunikasi visual, desain, dan media digital.',
+        icon: Sparkles,
+    },
+    {
+        name: 'Teknik Kendaraan Ringan (TKR)',
+        description: 'Perawatan dan sistem kendaraan ringan.',
+        icon: Wrench,
+    },
+];
 
+const lifecycleSteps = [
+    {
+        title: 'Pengajuan',
+        description: 'Siswa mengajukan PKL melalui portal.',
+        detail: 'Pengajuan ditinjau sebelum siswa ditempatkan.',
+        icon: FileText,
+    },
+    {
+        title: 'Verifikasi dan penempatan',
+        description: 'Hubin memeriksa pengajuan dan mengatur penempatan.',
+        detail: 'Guru pembimbing dan perusahaan menjadi bagian dari proses.',
+        icon: CheckSquare,
+    },
+    {
+        title: 'Pelaksanaan dan monitoring',
+        description: 'Siswa mengisi jurnal dan melakukan presensi.',
+        detail: 'Guru dapat mencatat kunjungan untuk memantau kegiatan PKL.',
+        icon: CalendarCheck,
+    },
+    {
+        title: 'Penilaian dan dokumen',
+        description: 'Pembimbing industri mengisi penilaian siswa.',
+        detail: 'Dokumen yang diterbitkan dapat diperiksa melalui QR.',
+        icon: QrCode,
+    },
+];
+
+const userRoles = [
+    {
+        name: 'Admin Hubin',
+        description: 'Mengelola pengajuan, perusahaan, dan penempatan siswa.',
+    },
+    {
+        name: 'Guru pembimbing',
+        description: 'Memantau siswa bimbingan dan mencatat kunjungan.',
+    },
+    {
+        name: 'Pembimbing industri',
+        description: 'Memeriksa jurnal dan mengisi penilaian siswa.',
+    },
+    {
+        name: 'Siswa',
+        description: 'Mengajukan PKL, melakukan presensi, dan mengisi jurnal.',
+    },
+];
+
+export default function Landing({ companies = [] }: Props) {
     const [currentSlide, setCurrentSlide] = useState(0);
+    const [isCarouselPaused, setIsCarouselPaused] = useState(false);
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
     useEffect(() => {
-        const timer = setInterval(() => {
-            setCurrentSlide((prev) => (prev + 1) % gallerySlides.length);
-        }, 5000);
-        return () => clearInterval(timer);
+        const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+        const updateMotionPreference = () => setPrefersReducedMotion(mediaQuery.matches);
+
+        updateMotionPreference();
+        mediaQuery.addEventListener('change', updateMotionPreference);
+
+        return () => mediaQuery.removeEventListener('change', updateMotionPreference);
     }, []);
 
-    const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % gallerySlides.length);
-    const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + gallerySlides.length) % gallerySlides.length);
+    useEffect(() => {
+        if (isCarouselPaused || prefersReducedMotion) return;
 
-    // 2. Partner Logos (SMK Taruna Bangsa Industry Partners)
-    const partnerLogos = [
-        { name: 'PT Astra International Tbk', category: 'Otomotif & Manufaktur', logo: 'https://upload.wikimedia.org/wikipedia/commons/a/a8/Logo_of_PT_Astra_International_Tbk_terbaru_2025.png?utm_source=id.wikipedia.org&utm_campaign=index&utm_content=original' },
-        { name: 'PT Toyota-Astra Motor', category: 'Manufaktur Presisi', logo: 'https://recruitment.toyota.astra.co.id/img/tam-logo.png' },
-        { name: 'Bank Indonesia', category: 'IT & Financial Technology', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/BI_Logo_%28cropped%29.png/250px-BI_Logo_%28cropped%29.png?utm_source=commons.wikimedia.org&utm_campaign=parser&utm_content=thumbnail' },
-        { name: 'PT Digital Nusantara Solusindo', category: 'Data Center', logo: 'https://dci-indonesia.com/images/logo/logo-white.svg' },
-        { name: 'PT Teradata Indonusa, Tbk.', category: 'Hardware & Tech Manufracture', logo: 'https://e-ipo.co.id/en/pipeline/get-logo?id=97'},
-        { name: 'Badan Pusat Statistik', category: 'Population Registration', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/28/Lambang_Badan_Pusat_Statistik_%28BPS%29_Indonesia.svg?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original'},
-        { name: 'Axioo Class Program', category: 'Class Program', logo: 'https://smkn1geger.sch.id/wp-content/uploads/2017/09/kelas-industri-axioo.png'},
-    ];
+        const timer = window.setInterval(() => {
+            setCurrentSlide((slide) => (slide + 1) % gallerySlides.length);
+        }, 7000);
 
-    // 3. Lifecycle Steps
-    const lifecycleSteps = [
-        { title: '1. Pendaftaran PKL', desc: 'Siswa memilih perusahaan mitra terverifikasi Hubin SMK Taruna Bangsa atau mengajukan proposal mandiri.', icon: FileText },
-        { title: '2. Approval Hubin', desc: 'Verifikasi kesesuaian jurusan (RPL, TKJ, DKV, TKR), kelayakan CV, dan alokasi kuota industri.', icon: CheckSquare },
-        { title: '3. Penempatan Industri', desc: 'Penetapan resmi Surat Penempatan, penunjukan Guru Pembimbing Sekolah & Supervisor Industri.', icon: MapPin },
-        { title: '4. Monitoring & GPS', desc: 'Absensi harian radius GPS, pengisian E-Jurnal kegiatan, dan visit monitoring berkala guru.', icon: CalendarCheck },
-        { title: '5. QR Verifikasi Surat', desc: 'Setiap surat tugas memiliki Verification ID & QR Code yang dapat dipindai untuk validasi keaslian dokumen.', icon: QrCode },
-        { title: '6. Evaluasi 7 Aspek', desc: 'Penilaian standar industri 7 indikator vokasi & rekapitulasi sertifikat nilai PKL terpusat.', icon: GraduationCap },
-    ];
+        return () => window.clearInterval(timer);
+    }, [isCarouselPaused, prefersReducedMotion]);
 
-    // 4. Majors at SMK Taruna Bangsa
-    const majors = [
-        { name: 'Rekayasa Perangkat Lunak (RPL)', icon: Cpu, desc: 'Web & Mobile Dev, Databases, RESTful API, & Software Quality Assurance.' },
-        { name: 'Teknik Komputer & Jaringan (TKJ)', icon: Globe, desc: 'Network Infrastructure, Cloud Computing, Cybersecurity, & Server Admin.' },
-        { name: 'Desain Komunikasi Visual (DKV)', icon: Sparkles, desc: 'UI/UX Design, Motion Graphics, Branding Identity, & Digital Media.' },
-        { name: 'Teknik Kendaraan Ringan (TKR)', icon: Wrench, desc: 'Engine Diagnostic, Automotive System, Electronic Control Unit (ECU).' },
-    ];
+    const previousSlide = () => {
+        setCurrentSlide((slide) => (slide - 1 + gallerySlides.length) % gallerySlides.length);
+    };
+
+    const nextSlide = () => {
+        setCurrentSlide((slide) => (slide + 1) % gallerySlides.length);
+    };
 
     return (
         <GuestLayout showNexa={false}>
-            <Head title="Hubin SMK Taruna Bangsa — PKLConnect Emerald Edition" />
+            <Head title="PKLConnect" />
 
-            {/* HERO SECTION WITH PHOTO SLIDER */}
-            <section className="relative overflow-x-clip overflow-y-hidden pt-6 sm:pt-8 pb-16 sm:pb-20 bg-slate-950 text-white">
-                <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] sm:w-[750px] h-[350px] sm:h-[750px] bg-gradient-to-tr from-emerald-600/20 via-teal-600/15 to-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-                <div className="w-full max-w-7xl mx-auto px-3 sm:px-8 lg:px-12 relative z-10">
-                    <div className="text-center max-w-4xl mx-auto mb-8 sm:mb-10">
-                        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[10px] sm:text-[11px] font-bold mb-4 sm:mb-6">
-                            <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" />
-                            <span>HUBIN SMK TARUNA BANGSA</span>
-                        </div>
-
-                        <h1 className="text-2xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-tight">
-                            Hubungkan Siswa, Sekolah, dan Industri  <br />
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-400 to-emerald-300">
-                                dalam Satu Platform
-                            </span>
-                        </h1>
-
-                        <p className="mt-3 sm:mt-4 text-slate-300 text-xs sm:text-lg leading-relaxed max-w-3xl mx-auto">
-                            Menghubungkan <strong className="text-emerald-300">Siswa SMK Taruna Bangsa</strong>, <strong className="text-emerald-300">Guru Pembimbing</strong>, dan <strong className="text-emerald-300">50+ Perusahaan Mitra Nasional</strong> dalam satu ekosistem digital real-time terintegrasi.
+            <section className="bg-white">
+                <div className="mx-auto grid max-w-7xl items-center gap-10 px-4 py-10 sm:px-8 sm:py-14 lg:grid-cols-[0.9fr_1.1fr] lg:gap-14 lg:px-12 lg:py-16">
+                    <div className="max-w-xl">
+                        <p className="mb-4 text-sm font-semibold text-emerald-700">
+                            PKL SMK Taruna Bangsa
                         </p>
+                        <h1 className="text-3xl font-bold leading-tight tracking-tight text-slate-950 sm:text-4xl lg:text-[2.75rem]">
+                            Kelola PKL siswa dari pengajuan hingga penilaian
+                        </h1>
+                        <p className="mt-5 max-w-lg text-base leading-7 text-slate-600">
+                            PKLConnect membantu siswa, guru, Hubin, dan pembimbing industri
+                            mengelola proses PKL melalui satu portal.
+                        </p>
+                        <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                            <Link
+                                href="/login"
+                                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
+                            >
+                                Masuk ke PKLConnect
+                                <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                            </Link>
+                            <a
+                                href="#alur"
+                                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-slate-300 px-5 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
+                            >
+                                Pelajari alur PKL
+                                <ArrowDown aria-hidden="true" className="h-4 w-4" />
+                            </a>
+                        </div>
                     </div>
 
-                    <div id="galeri" className="relative max-w-6xl mx-auto rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-800 shadow-2xl bg-slate-900 group">
-                        <div className="relative h-[260px] sm:h-[500px] w-full overflow-hidden">
-                            {gallerySlides.map((slide, idx) => (
-                                <div
-                                    key={slide.id}
-                                    className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
-                                        idx === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-                                    }`}
-                                >
-                                    <img
-                                        src={slide.image}
-                                        alt={slide.title}
-                                        className="w-full h-full object-cover object-center"
-                                    />
-                                    {/* Overlay Gradient Emerald */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent flex flex-col justify-end p-4 sm:p-10">
-                                        <span className="inline-block self-start px-2.5 py-1 sm:px-3.5 sm:py-1.5 bg-slate-900 text-white font-bold text-[9px] sm:text-[11px] uppercase tracking-wider rounded-full mb-2 sm:mb-3 border border-slate-700">
-                                            {slide.badge}
-                                        </span>
-                                        <h3 className="text-sm sm:text-3xl font-black text-white leading-snug">
-                                            {slide.title}
-                                        </h3>
-                                        <p className="text-[11px] sm:text-base text-slate-300 mt-1 font-medium max-w-2xl line-clamp-2 sm:line-clamp-none">
-                                            {slide.subtitle}
-                                        </p>
-                                    </div>
+                    <div
+                        id="galeri"
+                        className="relative isolate aspect-[4/3] overflow-hidden rounded-xl bg-slate-900 text-white"
+                        role="region"
+                        aria-roledescription="carousel"
+                        aria-label="Ilustrasi proses PKL"
+                    >
+                        {gallerySlides.map((slide, index) => (
+                            <div
+                                key={slide.title}
+                                className={`absolute inset-0 transition-opacity duration-500 motion-reduce:transition-none ${
+                                    index === currentSlide
+                                        ? 'z-10 opacity-100'
+                                        : 'z-0 opacity-0'
+                                }`}
+                                aria-hidden={index !== currentSlide}
+                            >
+                                <img
+                                    src={slide.image}
+                                    alt={`Ilustrasi ${slide.title.toLowerCase()} (foto stok)`}
+                                    className="h-full w-full object-cover"
+                                    loading={index === 0 ? 'eager' : 'lazy'}
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent" />
+                                <div className="absolute inset-x-0 bottom-0 p-5 pb-16 sm:p-8 sm:pb-20">
+                                    <p className="mb-2 text-xs font-semibold text-emerald-300">
+                                        Ilustrasi · {slide.category}
+                                    </p>
+                                    <h2 className="text-xl font-semibold sm:text-2xl">
+                                        {slide.title}
+                                    </h2>
+                                    <p className="mt-2 max-w-lg text-sm leading-6 text-slate-200">
+                                        {slide.description}
+                                    </p>
                                 </div>
-                            ))}
+                            </div>
+                        ))}
+
+                        <div className="absolute inset-x-0 bottom-0 z-20 flex items-center justify-between border-t border-white/15 bg-slate-950/40 px-4 py-3 sm:px-6">
+                            <p className="text-xs text-slate-200">Foto ilustrasi</p>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCarouselPaused((paused) => !paused)}
+                                    className="inline-flex h-9 items-center gap-2 rounded-md px-2 text-xs font-medium text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                                    disabled={prefersReducedMotion}
+                                    aria-label={
+                                        prefersReducedMotion
+                                            ? 'Putar otomatis dimatikan sesuai preferensi gerak'
+                                            : isCarouselPaused
+                                              ? 'Putar otomatis'
+                                              : 'Jeda putar otomatis'
+                                    }
+                                    aria-pressed={isCarouselPaused || prefersReducedMotion}
+                                >
+                                    {isCarouselPaused ? (
+                                        <Play aria-hidden="true" className="h-4 w-4" />
+                                    ) : (
+                                        <Pause aria-hidden="true" className="h-4 w-4" />
+                                    )}
+                                    <span className="hidden sm:inline">
+                                        {isCarouselPaused ? 'Putar' : 'Jeda'}
+                                    </span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={previousSlide}
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                                    aria-label="Foto sebelumnya"
+                                >
+                                    <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={nextSlide}
+                                    className="inline-flex h-9 w-9 items-center justify-center rounded-md text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                                    aria-label="Foto berikutnya"
+                                >
+                                    <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Slider Nav Buttons */}
-                        <button
-                            onClick={prevSlide}
-                            className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-950/80 border border-slate-700/60 text-white flex items-center justify-center hover:bg-white hover:text-slate-950 transition-all"
+                        <div
+                            className="absolute right-4 top-4 z-20 flex gap-1.5"
+                            role="group"
+                            aria-label="Pilih foto"
                         >
-                            <ChevronLeft className="w-4 h-4 sm:w-6 sm:h-6" />
-                        </button>
-
-                        <button
-                            onClick={nextSlide}
-                            className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-slate-950/80 border border-slate-700/60 text-white flex items-center justify-center hover:bg-white hover:text-slate-950 transition-all"
-                        >
-                            <ChevronRight className="w-4 h-4 sm:w-6 sm:h-6" />
-                        </button>
-
-                        {/* Slider Indicators Dots */}
-                        <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-6 z-20 flex items-center gap-1.5 sm:gap-2 bg-slate-950/80 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full border border-slate-700/60 backdrop-blur-sm">
-                            {gallerySlides.map((_, idx) => (
+                            {gallerySlides.map((slide, index) => (
                                 <button
-                                    key={idx}
-                                    onClick={() => setCurrentSlide(idx)}
-                                    className={`h-1.5 sm:h-2 rounded-full transition-all ${
-                                        idx === currentSlide ? 'w-4 sm:w-6 bg-white' : 'w-1.5 sm:w-2 bg-slate-500 hover:bg-slate-400'
+                                    key={slide.title}
+                                    type="button"
+                                    onClick={() => setCurrentSlide(index)}
+                                    className={`h-2.5 rounded-full border border-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${
+                                        index === currentSlide
+                                            ? 'w-6 bg-white'
+                                            : 'w-2.5 bg-slate-900/50'
                                     }`}
+                                    aria-label={`Tampilkan foto ${index + 1}: ${slide.title}`}
+                                    aria-current={index === currentSlide ? 'true' : undefined}
                                 />
                             ))}
                         </div>
                     </div>
-
-                    {/* Action Buttons Below Slider */}
-                    <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <Link
-                            href="/login"
-                            className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-slate-900 text-white font-bold text-sm sm:text-base hover:bg-slate-800 transition-colors flex items-center justify-center gap-3"
-                        >
-                            <span>Masuk ke Portal PKL</span>
-                            <ArrowRight className="w-5 h-5" />
-                        </Link>
-                        <a
-                            href="#alur"
-                            className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-white border border-slate-200 text-slate-700 font-bold text-sm sm:text-base hover:bg-slate-50 transition-colors flex items-center justify-center gap-2"
-                        >
-                            <span>Lihat Alur Siklus PKL</span>
-                        </a>
-                    </div>
                 </div>
             </section>
 
-            {/* INFINITE COMPANY LOGO SLIDER MARQUEE */}
-            <section id="mitra" className="py-12 bg-slate-900 border-y border-slate-800 overflow-hidden">
-                <div className="w-full px-4 sm:px-8 lg:px-12 text-center mb-6">
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-400 flex items-center justify-center gap-2">
-                        <Briefcase className="w-4 h-4" /> Mitra DUDI Resmi Hubin SMK Taruna Bangsa
-                    </span>
-                    <h2 className="text-xl font-bold text-white mt-1">Daftar Perusahaan & Industri Tempat PKL Siswa</h2>
-                </div>
-
-                <div className="relative w-full overflow-hidden py-4">
-                    <div className="flex w-[200%] animate-marquee space-x-6">
-                        {[...partnerLogos, ...partnerLogos].map((partner, idx) => (
-                            <div
-                                key={idx}
-                                className="w-64 shrink-0 bg-slate-950 border border-slate-800 rounded-2xl p-4 flex items-center gap-3 hover:border-slate-700 transition-colors"
-                            >
-                                <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-emerald-400 font-black text-[10px] shrink-0">
-                                    <img src={partner.logo} alt="partners logo" />
-                                </div>
-                                <div className="text-left overflow-hidden">
-                                    <h4 className="font-bold text-white text-[11px] truncate">{partner.name}</h4>
-                                    <p className="text-[10px] text-slate-500 truncate mt-0.5">{partner.category}</p>
-                                </div>
-                            </div>
-                        ))}
+            <section id="mitra" className="scroll-mt-24 border-y border-slate-200 bg-slate-50">
+                <div className="mx-auto max-w-7xl px-4 py-12 sm:px-8 lg:px-12 lg:py-14">
+                    <div className="mb-7 flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+                        <div>
+                            <p className="text-sm font-semibold text-emerald-700">Perusahaan</p>
+                            <h2 className="mt-1 text-2xl font-semibold tracking-tight text-slate-950">
+                                Tempat PKL yang terdaftar
+                            </h2>
+                        </div>
+                        <p className="max-w-md text-sm leading-6 text-slate-600">
+                            Daftar ini mengikuti data perusahaan berstatus aktif di PKLConnect.
+                        </p>
                     </div>
-                </div>
-            </section>
 
-            {/* VOKASI STATS COUNTER */}
-            <section className="py-12 bg-white">
-                <div className="w-full px-4 sm:px-8 lg:px-12">
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-center">
-                        <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200">
-                            <span className="text-3xl sm:text-4xl font-black text-emerald-600">500+</span>
-                            <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mt-1">Siswa PKL Aktif</p>
-                        </div>
-                        <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200">
-                            <span className="text-3xl sm:text-4xl font-black text-blue-600">52+</span>
-                            <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mt-1">Perusahaan Mitra MoU</p>
-                        </div>
-                        <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200">
-                            <span className="text-3xl sm:text-4xl font-black text-emerald-600">100%</span>
-                            <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mt-1">Digital TTD & Geolocation</p>
-                        </div>
-                        <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200">
-                            <span className="text-3xl sm:text-4xl font-black text-emerald-600">4.9/5</span>
-                            <p className="text-[11px] font-bold text-slate-600 uppercase tracking-wider mt-1">Kepuasan Industri</p>
-                        </div>
-                    </div>
+                    {companies.length > 0 ? (
+                        <ul className="grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
+                            {companies.map((company) => (
+                                <li
+                                    key={company.id}
+                                    className="border-t border-slate-300 py-4"
+                                >
+                                    <h3 className="font-semibold text-slate-900">{company.name}</h3>
+                                    {company.industry_type && (
+                                        <p className="mt-1 text-sm text-slate-600">
+                                            {company.industry_type}
+                                        </p>
+                                    )}
+                                </li>
+                            ))}
+                        </ul>
+                    ) : (
+                        <p className="border-t border-slate-300 py-4 text-sm text-slate-600">
+                            Belum ada perusahaan aktif yang dapat ditampilkan.
+                        </p>
+                    )}
                 </div>
             </section>
 
-            {/* PROGRAM KEAHLIAN SHOWCASE */}
-            <section id="program" className="py-16 bg-slate-50">
-                <div className="w-full px-4 sm:px-8 lg:px-12">
-                    <div className="text-center max-w-3xl mx-auto mb-12">
-                        <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-600 mb-2 block">Kompetensi Vokasi</span>
-                        <h2 className="text-3xl font-extrabold text-slate-900">Program Keahlian SMK Taruna Bangsa</h2>
-                        <p className="mt-2 text-slate-600 text-sm">Siswa siap ditempatkan PKL sesuai standar keahlian spesifik industri modern.</p>
+            <section id="program" className="scroll-mt-24 bg-white">
+                <div className="mx-auto max-w-7xl px-4 py-14 sm:px-8 lg:px-12 lg:py-16">
+                    <div className="max-w-2xl">
+                        <p className="text-sm font-semibold text-emerald-700">Bidang keahlian</p>
+                        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+                            Program keahlian SMK Taruna Bangsa
+                        </h2>
+                        <p className="mt-3 text-base leading-7 text-slate-600">
+                            Bidang keahlian yang ditampilkan dalam informasi PKL sekolah.
+                        </p>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                        {majors.map((m, idx) => {
-                            const Icon = m.icon;
+                    <ul className="mt-8 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-4">
+                        {majors.map((major) => {
+                            const Icon = major.icon;
+
                             return (
-                                <div key={idx} className="bg-white rounded-2xl p-6 border border-slate-200 hover:shadow-lg hover:border-slate-300 transition-all">
-                                    <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
-                                        <Icon className="w-6 h-6" />
-                                    </div>
-                                    <h3 className="font-bold text-slate-900 text-[14px] mb-2">{m.name}</h3>
-                                    <p className="text-[12px] text-slate-600 leading-relaxed">{m.desc}</p>
-                                </div>
+                                <li
+                                    key={major.name}
+                                    className="border-t-2 border-emerald-700 py-5"
+                                >
+                                    <Icon
+                                        aria-hidden="true"
+                                        className="mb-4 h-5 w-5 text-emerald-700"
+                                    />
+                                    <h3 className="font-semibold leading-6 text-slate-900">
+                                        {major.name}
+                                    </h3>
+                                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                                        {major.description}
+                                    </p>
+                                </li>
                             );
                         })}
-                    </div>
+                    </ul>
                 </div>
             </section>
 
-            {/* END-TO-END LIFECYCLE ROADMAP */}
-            <section id="alur" className="py-20 bg-white">
-                <div className="w-full px-4 sm:px-8 lg:px-12">
-                    <div className="text-center max-w-3xl mx-auto mb-16">
-                        <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-600 mb-2 block">Sistem Terintegrasi PKLConnect</span>
-                        <h2 className="text-3xl sm:text-4xl font-black text-slate-900">Alur Pengelolaan PKL SMK Taruna Bangsa</h2>
-                        <p className="mt-3 text-slate-600 text-sm">Proses efisien dari pendaftaran hingga diterbitkannya nilai akhir sertifikat PKL.</p>
+            <section id="alur" className="scroll-mt-24 bg-slate-50">
+                <div className="mx-auto max-w-7xl px-4 py-14 sm:px-8 lg:px-12 lg:py-16">
+                    <div className="max-w-2xl">
+                        <p className="text-sm font-semibold text-emerald-700">Proses PKL</p>
+                        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+                            Dari pengajuan sampai penilaian
+                        </h2>
+                        <p className="mt-3 text-base leading-7 text-slate-600">
+                            Tahapan utama pengelolaan PKL di PKLConnect.
+                        </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {lifecycleSteps.map((step, idx) => {
+                    <ol className="mt-8 divide-y divide-slate-300 border-y border-slate-300">
+                        {lifecycleSteps.map((step, index) => {
                             const Icon = step.icon;
+
                             return (
-                                <div key={idx} className="p-6 rounded-2xl bg-slate-50 border border-slate-200 hover:border-emerald-300 hover:shadow-lg transition-all">
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-900 text-white flex items-center justify-center mb-5">
-                                        <Icon className="w-6 h-6" />
+                                <li
+                                    key={step.title}
+                                    className="grid gap-3 py-5 sm:grid-cols-[3rem_1fr_1.2fr] sm:items-start sm:gap-6"
+                                >
+                                    <span className="flex items-center gap-3 text-sm font-semibold tabular-nums text-emerald-800 sm:block">
+                                        <Icon
+                                            aria-hidden="true"
+                                            className="h-5 w-5 text-emerald-700 sm:mb-3"
+                                        />
+                                        {String(index + 1).padStart(2, '0')}
+                                    </span>
+                                    <div>
+                                        <h3 className="font-semibold text-slate-950">{step.title}</h3>
+                                        <p className="mt-1 text-sm leading-6 text-slate-700">
+                                            {step.description}
+                                        </p>
                                     </div>
-                                    <h3 className="text-[15px] font-bold text-slate-900 mb-2">{step.title}</h3>
-                                    <p className="text-[12px] text-slate-600 leading-relaxed">{step.desc}</p>
-                                </div>
+                                    <p className="text-sm leading-6 text-slate-600">
+                                        {step.detail}
+                                    </p>
+                                </li>
                             );
                         })}
-                    </div>
+                    </ol>
                 </div>
             </section>
 
-            {/* DIRECT DEMO LOGIN ACCOUNTS */}
-            <section className="py-16 bg-slate-950 text-white border-t border-slate-800">
-                <div className="w-full px-4 sm:px-8 lg:px-12 text-center">
-                    <div className="max-w-3xl mx-auto mb-10">
-                        <span className="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full text-[11px] font-bold uppercase tracking-wider">
-                            Uji Coba Langsung
-                        </span>
-                        <h2 className="text-3xl font-black text-white mt-3">Akses Demo Login 4 Peran Pengguna</h2>
-                        <p className="text-slate-400 text-sm mt-2">Coba interaksi lengkap sebagai Admin Hubin, Guru Pembimbing, Industri, atau Siswa.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 text-left">
-                        {[
-                            { role: 'Admin Hubin', desc: 'Verifikasi pengajuan, penempatan siswa, & Early Warning System.', email: 'admin@pklconnect.id', icon: '👑', color: 'emerald' },
-                            { role: 'Guru Pembimbing', desc: 'Jadwal kunjungan monitoring, laporan visit, & TTD Surat Tugas.', email: 'guru@pklconnect.id', icon: '👨‍🏫', color: 'blue' },
-                            { role: 'Pembimbing Industri', desc: 'Approval E-Jurnal harian & pengisian nilai 7 aspek standar vokasi.', email: 'industri@pklconnect.id', icon: '🏢', color: 'emerald' },
-                            { role: 'Siswa PKL', desc: 'Pendaftaran PKL, Presensi GPS Geolocation, & pengisian E-Jurnal.', email: 'siswa@pklconnect.id', icon: '🎓', color: 'emerald' },
-                        ].map((item) => (
-                            <div key={item.role} className="p-5 bg-slate-900 border border-slate-800 hover:border-slate-700 transition-colors rounded-2xl space-y-3">
-                                <div className="w-10 h-10 rounded-xl bg-slate-800 text-xl flex items-center justify-center">
-                                    {item.icon}
-                                </div>
-                                <h4 className="font-bold text-white text-[14px]">{item.role}</h4>
-                                <p className="text-[12px] text-slate-400">{item.desc}</p>
-                                <p className="text-[11px] font-mono text-emerald-400">{item.email}</p>
-                                <Link href="/login" className="block text-center w-full py-2 bg-slate-800 border border-slate-700 text-slate-300 font-semibold text-[12px] rounded-xl hover:bg-slate-700 transition-colors">
-                                    Login {item.role.split(' ')[0]} →
-                                </Link>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* CALL TO ACTION */}
-            <section className="py-20 bg-slate-950 text-white text-center border-t border-slate-800">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl sm:text-5xl font-black tracking-tight">Mulai Pengelolaan PKL Vokasi Berstandar Industri</h2>
-                    <p className="mt-4 text-slate-400 text-sm sm:text-lg">
-                        Tingkatkan efisiensi kerja sama Hubungan Industri SMK Taruna Bangsa dengan PKLConnect.
-                    </p>
-                    <div className="mt-8">
+            <section className="bg-white">
+                <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16 lg:px-12 lg:py-16">
+                    <div className="max-w-md">
+                        <p className="text-sm font-semibold text-emerald-700">Akses pengguna</p>
+                        <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
+                            Satu portal, akses sesuai peran
+                        </h2>
+                        <p className="mt-3 text-base leading-7 text-slate-600">
+                            Masuk menggunakan akun yang diberikan sekolah atau perusahaan.
+                            Halaman masuk tidak menyediakan akun demo.
+                        </p>
                         <Link
                             href="/login"
-                            className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-white text-slate-900 font-bold text-base hover:bg-slate-100 transition-colors"
+                            className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2"
                         >
-                            <span>Masuk ke Dashboard</span>
-                            <ArrowRight className="w-5 h-5" />
+                            Login pengguna
+                            <ArrowUpRight aria-hidden="true" className="h-4 w-4" />
                         </Link>
                     </div>
+
+                    <ul className="divide-y divide-slate-200 border-y border-slate-200">
+                        {userRoles.map((role) => (
+                            <li
+                                key={role.name}
+                                className="grid gap-1 py-4 sm:grid-cols-[12rem_1fr] sm:gap-6"
+                            >
+                                <h3 className="font-semibold text-slate-900">{role.name}</h3>
+                                <p className="text-sm leading-6 text-slate-600">
+                                    {role.description}
+                                </p>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </section>
+
+            <section className="bg-slate-900 text-white">
+                <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-12 sm:px-8 md:flex-row md:items-center md:justify-between lg:px-12 lg:py-14">
+                    <div className="max-w-2xl">
+                        <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                            Kelola proses PKL dalam satu portal.
+                        </h2>
+                        <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base">
+                            Masuk untuk melihat data dan kegiatan sesuai peran Anda.
+                        </p>
+                    </div>
+                    <Link
+                        href="/login"
+                        className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
+                    >
+                        Masuk ke PKLConnect
+                        <ArrowRight aria-hidden="true" className="h-4 w-4" />
+                    </Link>
                 </div>
             </section>
         </GuestLayout>
