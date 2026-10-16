@@ -65,7 +65,20 @@ self.addEventListener('fetch', (event) => {
                 })
                 .catch(async () => {
                     const cached = await caches.match(request);
-                    return cached || caches.match('/offline.html');
+                    if (cached) return cached;
+
+                    const offlinePage = await caches.match('/offline.html');
+                    if (offlinePage) return offlinePage;
+
+                    // Ultimate fallback — always return a valid Response
+                    return new Response(
+                        '<h1>Offline</h1><p>Tidak ada koneksi internet.</p>',
+                        {
+                            status: 503,
+                            statusText: 'Service Unavailable',
+                            headers: { 'Content-Type': 'text/html; charset=utf-8' },
+                        }
+                    );
                 })
         );
         return;
@@ -77,11 +90,18 @@ self.addEventListener('fetch', (event) => {
             caches.match(request).then(
                 (cached) =>
                     cached ||
-                    fetch(request).then((response) => {
-                        const copy = response.clone();
-                        caches.open(RUNTIME).then((cache) => cache.put(request, copy));
-                        return response;
-                    })
+                    fetch(request)
+                        .then((response) => {
+                            const copy = response.clone();
+                            caches.open(RUNTIME).then((cache) => cache.put(request, copy));
+                            return response;
+                        })
+                        .catch(() => {
+                            return new Response('', {
+                                status: 503,
+                                statusText: 'Service Unavailable',
+                            });
+                        })
             )
         );
         return;
@@ -96,7 +116,13 @@ self.addEventListener('fetch', (event) => {
                     caches.open(RUNTIME).then((cache) => cache.put(request, copy));
                     return response;
                 })
-                .catch(() => cached);
+                .catch(() => {
+                    // Return cached version, or a 503 if nothing is available
+                    return cached || new Response('', {
+                        status: 503,
+                        statusText: 'Service Unavailable',
+                    });
+                });
             return cached || network;
         })
     );
