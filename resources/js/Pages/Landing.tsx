@@ -31,25 +31,25 @@ const gallerySlides = [
         title: 'Pengajuan dan penempatan',
         description: 'Siswa mengajukan PKL dan melihat proses penempatannya.',
         category: 'Pengajuan',
-        image: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=1400&q=80',
+        image: '/img/gallery/pkl1.webp',
     },
     {
         title: 'Kegiatan di tempat PKL',
         description: 'Siswa mencatat kegiatan selama menjalani praktik kerja.',
         category: 'Kegiatan',
-        image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1400&q=80',
+        image: '/img/gallery/pkl2.webp',
     },
     {
         title: 'Pemantauan siswa',
         description: 'Guru pembimbing memantau perkembangan dan kunjungan PKL.',
         category: 'Monitoring',
-        image: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1400&q=80',
+        image: '/img/gallery/pkl3.webp',
     },
     {
         title: 'Penilaian hasil PKL',
         description: 'Pembimbing industri mengisi penilaian siswa.',
         category: 'Penilaian',
-        image: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1400&q=80',
+        image: '/img/gallery/pkl4.webp',
     },
 ];
 
