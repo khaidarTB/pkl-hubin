@@ -25,6 +25,7 @@ class Company extends Model
         'latitude',
         'longitude',
         'allowed_radius',
+        'max_gps_accuracy',
         'jam_masuk',
         'jam_keluar',
     ];
@@ -33,7 +34,21 @@ class Company extends Model
         'latitude' => 'float',
         'longitude' => 'float',
         'allowed_radius' => 'integer',
+        'max_gps_accuracy' => 'integer',
     ];
+
+    /**
+     * Batas akurasi GPS efektif: pakai nilai perusahaan bila diisi, jika tidak
+     * jatuh ke pengaturan global (settings) lalu config sebagai fallback.
+     */
+    public function resolveMaxGpsAccuracy(): float
+    {
+        if ($this->max_gps_accuracy !== null && $this->max_gps_accuracy > 0) {
+            return (float) $this->max_gps_accuracy;
+        }
+
+        return (float) Setting::get('max_gps_accuracy', config('attendance.max_gps_accuracy', 50));
+    }
 
     public function getJamMasukAttribute(?string $value): ?string
     {

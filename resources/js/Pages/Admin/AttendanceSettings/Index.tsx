@@ -28,7 +28,7 @@ export default function AttendanceSettingsIndex({ settings, envDefault }: Props)
                 <div>
                     <h1 className="text-xl font-bold text-slate-900">Pengaturan Presensi GPS</h1>
                     <p className="text-[13px] text-slate-500 mt-0.5">
-                        Konfigurasi global yang dipakai seluruh siswa saat absensi (check-in & check-out) berbasis GPS.
+                        Nilai ini dipakai sebagai <strong>default/fallback</strong> untuk perusahaan yang belum mengatur batas akurasinya sendiri.
                     </p>
                 </div>
 
@@ -46,7 +46,7 @@ export default function AttendanceSettingsIndex({ settings, envDefault }: Props)
                     <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-5">
                         <div>
                             <h3 className="text-[15px] font-bold text-slate-900 flex items-center gap-2">
-                                <SatelliteDish className="w-4 h-4 text-cyan-600" /> Batas Akurasi GPS (Global)
+                                <SatelliteDish className="w-4 h-4 text-cyan-600" /> Batas Akurasi GPS Default
                             </h3>
                             <p className="text-[12px] text-slate-500 mt-1 leading-relaxed">
                                 Absensi ditolak bila akurasi GPS siswa lebih buruk dari batas ini.
@@ -55,7 +55,7 @@ export default function AttendanceSettingsIndex({ settings, envDefault }: Props)
                             </p>
                         </div>
                         <span className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-bold uppercase shrink-0">
-                            Berlaku untuk semua perusahaan
+                            Fallback perusahaan
                         </span>
                     </div>
 
@@ -106,9 +106,10 @@ export default function AttendanceSettingsIndex({ settings, envDefault }: Props)
                 <div className="rounded-2xl bg-amber-50/70 border border-amber-100 p-4 flex items-start gap-3">
                     <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                     <p className="text-[12px] text-amber-800 leading-relaxed">
-                        <strong>Catatan:</strong> selain akurasi GPS, siswa juga harus berada di dalam <strong>radius lokasi</strong>{' '}
-                        perusahaan (diatur per perusahaan pada menu <em>Perusahaan Mitra → Edit</em> → field <em>Radius (m)</em>).
-                        Keduanya harus terpenuhi agar absensi diterima.
+                        <strong>Catatan:</strong> setiap perusahaan bisa mengatur <strong>batas akurasi GPS</strong> dan{' '}
+                        <strong>radius lokasi</strong>-nya sendiri pada menu <em>Perusahaan Mitra → Edit</em> (field{' '}
+                        <em>Batas Akurasi (m)</em> dan <em>Radius (m)</em>). Perusahaan yang membiarkan akurasi kosong akan
+                        memakai nilai default di atas. Akurasi GPS <strong>dan</strong> radius harus terpenuhi agar absensi diterima.
                     </p>
                 </div>
 

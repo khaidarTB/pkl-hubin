@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Attendance;
 use App\Models\AttendanceAttempt;
-use App\Models\Setting;
 use App\Models\Student;
 use App\Services\Support\GeoCalculator;
 use Carbon\Carbon;
@@ -115,8 +114,8 @@ class AttendanceService
             );
         }
 
-        // 5. Akurasi GPS harus cukup baik.
-        $maxAccuracy = (float) Setting::get('max_gps_accuracy', config('attendance.max_gps_accuracy', 50));
+        // 5. Akurasi GPS harus cukup baik (batas mengikuti perusahaan, lalu global).
+        $maxAccuracy = $company->resolveMaxGpsAccuracy();
         if ($accuracy > $maxAccuracy) {
             return $this->reject(
                 $student, $company, $latitude, $longitude, $accuracy,
@@ -293,8 +292,8 @@ class AttendanceService
             );
         }
 
-        // 6. Akurasi GPS.
-        $maxAccuracy = (float) Setting::get('max_gps_accuracy', config('attendance.max_gps_accuracy', 50));
+        // 6. Akurasi GPS (batas mengikuti perusahaan, lalu global).
+        $maxAccuracy = $company->resolveMaxGpsAccuracy();
         if ($accuracy > $maxAccuracy) {
             return $this->reject(
                 $student, $company, $latitude, $longitude, $accuracy,

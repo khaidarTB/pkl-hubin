@@ -25,6 +25,7 @@ export interface Company {
     latitude?: number | null;
     longitude?: number | null;
     allowed_radius?: number | null;
+    max_gps_accuracy?: number | null;
     jam_masuk?: string | null;
     jam_keluar?: string | null;
     placements_count?: number;

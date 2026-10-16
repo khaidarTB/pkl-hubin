@@ -45,6 +45,7 @@ class CompanyController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'allowed_radius' => 'nullable|integer|min:50|max:5000',
+            'max_gps_accuracy' => 'nullable|integer|min:10|max:5000',
             'jam_masuk' => ['nullable', 'regex:/^([01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?$/'],
             'jam_keluar' => ['nullable', 'regex:/^([01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?$/', 'after:jam_masuk'],
         ]);
@@ -54,6 +55,10 @@ class CompanyController extends Controller
 
         if (blank($validated['allowed_radius'] ?? null)) {
             $validated['allowed_radius'] = config('attendance.default_radius', 100);
+        }
+
+        if (array_key_exists('max_gps_accuracy', $validated) && blank($validated['max_gps_accuracy'])) {
+            $validated['max_gps_accuracy'] = null;
         }
 
         Company::create($validated);
@@ -79,6 +84,7 @@ class CompanyController extends Controller
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
             'allowed_radius' => 'nullable|integer|min:50|max:5000',
+            'max_gps_accuracy' => 'nullable|integer|min:10|max:5000',
             'jam_masuk' => ['nullable', 'regex:/^([01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?$/'],
             'jam_keluar' => ['nullable', 'regex:/^([01][0-9]|2[0-3]):[0-5][0-9](?::[0-5][0-9])?$/', 'after:jam_masuk'],
             'partnership_status' => 'nullable|string|in:active,inactive,pending',
@@ -86,6 +92,10 @@ class CompanyController extends Controller
 
         $validated['jam_masuk'] = $this->normalizeTime($validated['jam_masuk'] ?? null);
         $validated['jam_keluar'] = $this->normalizeTime($validated['jam_keluar'] ?? null);
+
+        if (array_key_exists('max_gps_accuracy', $validated) && blank($validated['max_gps_accuracy'])) {
+            $validated['max_gps_accuracy'] = null;
+        }
 
         $company->update($validated);
 

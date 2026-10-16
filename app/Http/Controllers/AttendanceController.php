@@ -56,7 +56,9 @@ class AttendanceController extends Controller
             'todayDate' => Carbon::now()->isoFormat('D MMMM YYYY'),
             'currentTime' => Carbon::now()->format('H:i'),
             'config' => [
-                'maxGpsAccuracy' => (float) Setting::get('max_gps_accuracy', config('attendance.max_gps_accuracy', 50)),
+                'maxGpsAccuracy' => $company
+                    ? $company->resolveMaxGpsAccuracy()
+                    : (float) Setting::get('max_gps_accuracy', config('attendance.max_gps_accuracy', 50)),
                 'defaultRadius' => config('attendance.default_radius'),
                 'onTimeGraceMinutes' => config('attendance.on_time_grace_minutes'),
                 'window' => config('attendance.check_in_window'),

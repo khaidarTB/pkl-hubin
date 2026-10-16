@@ -4,7 +4,7 @@ import { DashboardLayout } from '@/Layouts/DashboardLayout';
 import { Company } from '@/Types';
 import { Pagination } from '@/Components/Pagination';
 import { Listable, toItems } from '@/lib/pagination';
-import { Building2, Plus, MapPin, Phone, Globe, Radar, Edit3, Trash2, X, Check, Search, Clock } from 'lucide-react';
+import { Building2, Plus, MapPin, Phone, Globe, Radar, Edit3, Trash2, X, Check, Search, Clock, SatelliteDish } from 'lucide-react';
 
 interface Props { companies: Listable<Company>; }
 
@@ -20,6 +20,7 @@ export default function CompaniesIndex({ companies }: Props) {
         name: '', address: '', city: '', phone: '', email: '', website: '',
         industry_type: 'Technology & Software', description: '', supervisor_name: '', student_quota: 10,
         latitude: '', longitude: '', allowed_radius: 100, jam_masuk: '', jam_keluar: '',
+        max_gps_accuracy: '' as string | number,
     });
 
     // Form Edit
@@ -28,6 +29,7 @@ export default function CompaniesIndex({ companies }: Props) {
         industry_type: '', description: '', supervisor_name: '', student_quota: 10,
         latitude: '' as string | number, longitude: '' as string | number, allowed_radius: 100,
         partnership_status: 'active', jam_masuk: '', jam_keluar: '',
+        max_gps_accuracy: '' as string | number,
     });
 
     const handleAddSubmit = (e: React.FormEvent) => {
@@ -51,6 +53,7 @@ export default function CompaniesIndex({ companies }: Props) {
             latitude: comp.latitude ?? '',
             longitude: comp.longitude ?? '',
             allowed_radius: comp.allowed_radius || 100,
+            max_gps_accuracy: comp.max_gps_accuracy ?? '',
             jam_masuk: comp.jam_masuk || '',
             jam_keluar: comp.jam_keluar || '',
             partnership_status: comp.partnership_status || 'active',
@@ -144,6 +147,14 @@ export default function CompaniesIndex({ companies }: Props) {
                                                     <Radar className="w-3 h-3 text-cyan-500 shrink-0" />
                                                     <span className="font-semibold text-cyan-700">
                                                         GPS radius {comp.allowed_radius ?? 100} m
+                                                    </span>
+                                                </p>
+                                            )}
+                                            {comp.latitude != null && comp.longitude != null && (
+                                                <p className="flex items-center gap-1.5">
+                                                    <SatelliteDish className="w-3 h-3 text-cyan-500 shrink-0" />
+                                                    <span>
+                                                        Akurasi maks {comp.max_gps_accuracy != null ? `${comp.max_gps_accuracy} m` : 'global'}
                                                     </span>
                                                 </p>
                                             )}
@@ -270,6 +281,12 @@ export default function CompaniesIndex({ companies }: Props) {
                             </div>
                             <div className="grid grid-cols-3 gap-2 mt-2">
                                 <div>
+                                    <label className="block text-[11px] font-semibold text-slate-600 mb-1" title="Kosongkan untuk memakai batas akurasi global">Batas Akurasi (m)</label>
+                                    <input type="number" min={10} max={5000} placeholder="Global"
+                                        value={addForm.data.max_gps_accuracy} onChange={(e) => addForm.setData('max_gps_accuracy', e.target.value === '' ? '' : parseInt(e.target.value))}
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[11px]" />
+                                </div>
+                                <div>
                                     <label className="block text-[11px] font-semibold text-slate-600 mb-1">Jam Masuk</label>
                                     <input type="time" value={addForm.data.jam_masuk} onChange={(e) => addForm.setData('jam_masuk', e.target.value)}
                                         className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[11px]" />
@@ -280,6 +297,7 @@ export default function CompaniesIndex({ companies }: Props) {
                                         className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[11px]" />
                                 </div>
                             </div>
+                            <p className="text-[10px] text-slate-500 mt-2">Batas akurasi GPS dikosongkan berarti memakai pengaturan global (Pengaturan Presensi GPS).</p>
                         </div>
                         <div className="flex items-center justify-end gap-2 pt-2">
                             <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 bg-slate-100 text-slate-600 font-semibold text-[12px] rounded-xl hover:bg-slate-200">Batal</button>
@@ -371,6 +389,12 @@ export default function CompaniesIndex({ companies }: Props) {
                             </div>
                             <div className="grid grid-cols-3 gap-2 mt-2">
                                 <div>
+                                    <label className="block text-[11px] font-semibold text-slate-600 mb-1" title="Kosongkan untuk memakai batas akurasi global">Batas Akurasi (m)</label>
+                                    <input type="number" min={10} max={5000} placeholder="Global"
+                                        value={editForm.data.max_gps_accuracy} onChange={(e) => editForm.setData('max_gps_accuracy', e.target.value === '' ? '' : parseInt(e.target.value))}
+                                        className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[11px]" />
+                                </div>
+                                <div>
                                     <label className="block text-[11px] font-semibold text-slate-600 mb-1">Jam Masuk</label>
                                     <input type="time" value={editForm.data.jam_masuk} onChange={(e) => editForm.setData('jam_masuk', e.target.value)}
                                         className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[11px]" />
@@ -381,6 +405,7 @@ export default function CompaniesIndex({ companies }: Props) {
                                         className="w-full bg-white border border-slate-200 rounded-xl px-2.5 py-2 text-[11px]" />
                                 </div>
                             </div>
+                            <p className="text-[10px] text-slate-500 mt-2">Batas akurasi GPS dikosongkan berarti memakai pengaturan global (Pengaturan Presensi GPS).</p>
                         </div>
 
                         <div className="flex items-center justify-end gap-2 pt-2">
